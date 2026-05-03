@@ -9,7 +9,6 @@ Contains:
 
 Entry: `python app.py` launches Gradio on port 7860.
 """
-import io
 import json
 import os
 import re
