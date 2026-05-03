@@ -1,0 +1,67 @@
+---
+SOURCE: American College of Surgeons. ATLS: Advanced Trauma Life Support. 10th ed. 2018.
+SOURCE: Australian and New Zealand Burn Association. Emergency Management of Severe Burns 
+(EMSB) Course Manual. 18th ed. 2016.
+TOPIC: Emergency Room Protocol for Severe Burns
+
+FIRST HOUR IN ER - STEP BY STEP:
+
+STEP 1: PRIMARY SURVEY (0-5 min)
+- Airway: Check for inhalation signs (singed nasal hair, hoarse voice, stridor)
+- Breathing: O2 saturation, respiratory rate, chest wall compliance
+- Circulation: 2 large bore IVs (avoid burned areas if possible)
+- Start fluid if TBSA > 15% adults / > 10% children
+- Disability: GCS, pupils
+- Exposure: Remove ALL clothing and jewelry, estimate burn size
+
+STEP 2: CALCULATE TBSA (5-10 min)
+- Use Lund-Browder chart (age-adjusted) for accuracy
+- Rule of Nines acceptable for rapid triage
+- Do NOT include first-degree burns in calculation
+- Document location, depth estimate, and percentage of each area
+
+STEP 3: CALCULATE FLUIDS (10-15 min)
+- Apply Parkland formula: 4 mL x kg x TBSA%
+- Calculate rate for first 8 hours (from TIME OF BURN)
+- Set up fluid monitoring, insert urinary catheter
+- Target urine output: 0.5 mL/kg/hr adults / 1 mL/kg/hr children
+
+STEP 4: ANALGESIA
+- IV morphine 0.1 mg/kg titrated to pain score
+- Consider ketamine 0.3-0.5 mg/kg for painful procedures
+- Do NOT use IM route (unreliable absorption in burn patients)
+
+STEP 5: WOUND CARE (after stabilization)
+- Cool wounds only if < 3 hours since injury
+- Gentle cleansing with chlorhexidine solution
+- Silver sulfadiazine 1% cream or petroleum-impregnated gauze
+- Elevate affected extremities
+
+STEP 6: SECONDARY SURVEY
+- Full head-to-toe examination
+- Assess for associated trauma
+- Circumferential burns -> monitor for compartment syndrome
+- Chest/abdominal circumferential -> restrict ventilation -> escharotomy?
+
+STEP 7: DISPOSITION DECISION
+Admit to burn unit if:
+- TBSA >= 10% in adults
+- TBSA >= 5% in children or elderly
+- Any full thickness burn
+- Burns to face, hands, feet, genitalia
+- Inhalation injury
+
+Transfer to tertiary burn center if:
+- TBSA > 20%
+- Electrical or chemical burns
+- Burns + trauma
+- Pediatric burns > 10% TBSA
+
+DOCUMENTATION REQUIRED:
+- Time of burn injury (for fluid calculation)
+- TBSA estimate by Lund-Browder
+- Fluid administered pre-hospital
+- Urine output since catheter insertion
+- Pain scores before and after analgesia
+- Tetanus status
+---

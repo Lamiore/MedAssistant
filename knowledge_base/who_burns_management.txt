@@ -1,0 +1,56 @@
+---
+SOURCE: World Health Organization. Burns. Fact Sheet. 2018. 
+SOURCE: WHO Emergency Triage Assessment and Treatment (ETAT). 2005.
+SOURCE: Peck MD. Epidemiology of burns throughout the world. Burns. 2011;37(7):1087-1100.
+TOPIC: WHO Guidelines and Global Perspective on Burn Management
+
+GLOBAL BURDEN:
+- ~180,000 deaths per year from burns globally
+- 95% of burn deaths occur in low and middle-income countries
+- Burns are a leading cause of disability in Southeast Asia and Africa
+- Indonesia: burns rank among top causes of trauma-related morbidity
+
+WHO FIRST AID RECOMMENDATIONS:
+1. STOP the burning: remove from source, stop/drop/roll
+2. COOL: cool burn with cool running water for 20 minutes (NOT ice)
+3. COVER: with clean non-fluffy material
+4. CALM: reassure patient, keep warm to prevent hypothermia
+5. REFER: to appropriate health facility
+
+DO NOT:
+- Apply ice (causes vasoconstriction and deeper injury)
+- Apply toothpaste, butter, oils (infection risk)
+- Break blisters (infection risk)
+- Apply tight bandages
+
+WHO TRIAGE FOR BURN PATIENTS (in resource-limited settings):
+IMMEDIATE (Red):
+- TBSA > 20% with hemodynamic instability
+- Airway burns with respiratory distress
+- Circumferential chest burns
+
+URGENT (Yellow):
+- TBSA 10-20%, stable
+- Partial thickness burns to critical areas
+
+DELAYED (Green):
+- TBSA < 10%, no critical areas
+- First degree burns
+
+EXPECTANT (Black):
+- TBSA > 60% in resource-limited settings
+- Severe inhalation injury + TBSA > 40%
+
+INFECTION PREVENTION:
+- Clean burns with mild soap and water or chlorhexidine
+- Silver sulfadiazine or petroleum gauze for wound coverage
+- Tetanus prophylaxis for unimmunized patients
+- Systemic antibiotics NOT recommended prophylactically (promotes resistance)
+
+NUTRITIONAL SUPPORT:
+- Burns are hypermetabolic injuries
+- Early enteral feeding within 6 hours of injury
+- Caloric requirement: Harris-Benedict x stress factor (1.5-2.0)
+- Protein: 1.5-2 g/kg/day
+- Vitamin C, zinc, selenium supplementation recommended
+---

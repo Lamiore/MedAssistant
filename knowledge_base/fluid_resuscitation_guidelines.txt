@@ -1,0 +1,47 @@
+---
+SOURCE: Romanowski KS, et al. American Burn Association Guidelines on the Management of Acute 
+Burns. J Burn Care Res. 2023;44(3):481-500.
+TOPIC: Current Guidelines for Burn Fluid Resuscitation
+
+INITIAL ASSESSMENT (ABCDE):
+A - Airway: Assess for inhalation injury, stridor, carbonaceous sputum
+B - Breathing: Respiratory rate, oxygen saturation, chest burns (escharotomy if needed)
+C - Circulation: IV access (2 large-bore IVs), fluid resuscitation
+D - Disability: Neurological status, Glasgow Coma Scale
+E - Exposure: Remove clothing, estimate burn size and depth
+
+FLUID RESUSCITATION PRINCIPLES:
+1. Start fluid resuscitation for burns > 15% TBSA in adults, > 10% in children
+2. Use Lactated Ringer's as first-line crystalloid
+3. Avoid colloids in first 8-12 hours (increased capillary permeability)
+4. After 24 hours, may add albumin 5% to reduce total crystalloid volume
+5. Avoid dextrose-containing solutions in adults (hyperglycemia risk)
+
+ENDPOINTS OF RESUSCITATION:
+Primary endpoint: Urine output
+- Adults: 0.5 mL/kg/hour (30-50 mL/hour)
+- Children < 30 kg: 1 mL/kg/hour
+
+Secondary endpoints:
+- Mean arterial pressure > 65 mmHg
+- Lactate clearance
+- Base excess > -6
+
+OVER-RESUSCITATION (Fluid Creep):
+Common complication when too much fluid given.
+Complications: Pulmonary edema, abdominal compartment syndrome, extremity compartment syndrome.
+Prevention: Titrate to urine output, avoid bolus fluids, consider vitamin C 66 mg/kg/hr 
+in first 24 hours (reduces capillary leak).
+
+SPECIAL SITUATIONS:
+- Electrical burns: Increase fluid to maintain urine output 1 mL/kg/hr 
+  (myoglobinuria risk -> alkalinize urine)
+- Chemical burns: Copious irrigation first, then standard resuscitation
+- Inhalation injury: Increase fluid estimate by 30-40%
+- Circumferential burns: Monitor for compartment syndrome, escharotomy if needed
+
+VASOPRESSORS:
+- Not first-line in burn resuscitation
+- Use only if adequate fluid given but hypotension persists
+- Norepinephrine is agent of choice if needed
+---

@@ -1,0 +1,41 @@
+---
+SOURCE: Baxter CR, Shires T. Physiological response to crystalloid resuscitation of severe burns. 
+Ann N Y Acad Sci. 1968;150(3):874-894.
+TOPIC: Parkland Formula for Burn Fluid Resuscitation
+
+FORMULA:
+Total fluid in first 24 hours = 4 mL x Body Weight (kg) x TBSA (%)
+Fluid type: Lactated Ringer's solution (Ringer's Lactate)
+
+ADMINISTRATION SCHEDULE:
+- First 8 hours from TIME OF BURN (not time of admission): Give 50% of total
+- Next 16 hours: Give remaining 50%
+IMPORTANT: Time is calculated from time of burn injury, NOT time of hospital arrival.
+If patient arrives 2 hours after burn, the first 8-hour dose must be given in only 6 hours.
+
+EXAMPLE:
+Patient: 60 kg, TBSA = 30%
+Total = 4 x 60 x 30 = 7,200 mL
+First 8 hours: 3,600 mL -> rate = 450 mL/hour
+Next 16 hours: 3,600 mL -> rate = 225 mL/hour
+
+PEDIATRIC CONSIDERATION:
+For children, add maintenance fluid (D5LR):
+- 100 mL/kg for first 10 kg body weight
+- 50 mL/kg for next 10 kg
+- 20 mL/kg for each kg above 20 kg
+
+MONITORING PARAMETERS:
+- Urine output: Adults 0.5 mL/kg/hr | Children 1 mL/kg/hr
+- Adjust rate based on urine output response
+- Monitor for signs of over-resuscitation (pulmonary edema, abdominal compartment syndrome)
+
+LIMITATIONS:
+- Formula provides initial estimate only
+- Must be titrated to clinical response
+- Not suitable for chemical burns, electrical burns, or inhalation injury without modification
+
+ALTERNATIVE FORMULAS:
+- Modified Brooke: 2 mL x kg x TBSA% (uses less fluid, currently preferred by some centers)
+- Galveston (pediatric): 5000 mL/m2 burned + 2000 mL/m2 BSA/day
+---

@@ -1,0 +1,66 @@
+---
+SOURCE: American Burn Association. Advanced Burn Life Support Course Provider Manual. 2018.
+TOPIC: Classification of Burn Depth and Severity
+
+BURN DEPTH CLASSIFICATION:
+
+1. FIRST DEGREE (Superficial / Epidermal):
+   - Involves epidermis only
+   - Appearance: Red, dry, no blisters
+   - Pain: Painful, sensitive to touch
+   - Healing: 3-5 days, no scarring
+   - Example: Sunburn
+   - NOT counted in TBSA for fluid calculation
+
+2. SECOND DEGREE - Superficial Partial Thickness:
+   - Involves epidermis and superficial dermis (papillary dermis)
+   - Appearance: Red, moist, blistered, weeping
+   - Pain: Very painful, hyperesthetic
+   - Healing: 10-14 days, minimal scarring
+   - Counted in TBSA
+
+3. SECOND DEGREE - Deep Partial Thickness:
+   - Involves epidermis and deep dermis (reticular dermis)
+   - Appearance: Red to pale pink, wet or dry, may or may not blister
+   - Pain: Less painful (nerve damage)
+   - Healing: 3-8 weeks, significant scarring, may need grafting
+   - Counted in TBSA
+
+4. THIRD DEGREE (Full Thickness):
+   - Destroys entire dermis, may involve subcutaneous tissue
+   - Appearance: White, brown, or black; leathery, dry, no blisters
+   - Pain: Painless (nerve endings destroyed)
+   - Healing: Does NOT heal without skin grafting
+   - Counted in TBSA
+
+5. FOURTH DEGREE:
+   - Extends to bone, muscle, or tendon
+   - Requires amputation or extensive debridement
+   - Counted in TBSA
+
+SEVERITY CLASSIFICATION (American Burn Association):
+
+MINOR BURNS:
+- Adults: < 10% TBSA partial thickness, < 2% full thickness
+- Children/Elderly: < 5% TBSA partial thickness
+- No involvement of face, hands, feet, genitalia, or major joints
+
+MODERATE BURNS:
+- Adults: 10-20% TBSA partial thickness, 2-5% full thickness
+- Children: 5-10% TBSA
+
+MAJOR BURNS (require burn center referral):
+- > 20% TBSA in adults
+- > 10% TBSA in children under 10 or adults over 50
+- > 5% full thickness burns
+- Burns involving face, hands, feet, genitalia, perineum, major joints
+- Electrical burns
+- Chemical burns
+- Inhalation injury
+- Circumferential burns of limbs or chest
+
+CRITICAL/LIFE-THREATENING:
+- TBSA > 40%
+- Associated inhalation injury
+- Significant comorbidities
+---

@@ -1,0 +1,43 @@
+---
+SOURCE: Sheridan RL. Burns in children. Curr Probl Surg. 2004;41(9):694-762.
+SOURCE: Palmieri TL. Pediatric Burn Resuscitation. Crit Care Clin. 2016;32(4):547-559.
+TOPIC: Special Considerations for Pediatric Burn Management
+
+WHY CHILDREN ARE DIFFERENT:
+1. Body surface area to weight ratio is higher -> greater fluid and heat losses
+2. Head is proportionally larger (up to 19% in newborns vs 9% in adults)
+3. Legs are proportionally smaller at birth, grow with age
+4. Thinner skin -> deeper burns from same heat exposure
+5. Limited physiologic reserve
+6. Risk of hypothermia is greater
+
+LUND-BROWDER ADJUSTMENTS FOR CHILDREN:
+The Lund-Browder modification for children uses the following rule:
+- For each year of age ABOVE 1 year: subtract 1% from the head, add 0.5% to EACH leg
+- Example: Age 5 -> Head = 19 - 5 = 14% total | Each leg = 13 + 2.5 = 15.5%
+
+FLUID RESUSCITATION IN CHILDREN:
+Modified Parkland (Galveston Formula):
+  Resuscitation fluid: 3 mL x kg x TBSA%
+  Maintenance fluid: 1500 mL/m2 BSA/day
+  Use D5LR (5% dextrose in Lactated Ringer's) for maintenance
+  Total = Resuscitation + Maintenance
+  
+ELECTROLYTE MONITORING:
+- Children are at risk for hyponatremia (seizures)
+- Check sodium every 4-6 hours in major burns
+- Glucose monitoring every 2-4 hours (hypoglycemia risk)
+
+BURN CENTER CRITERIA FOR CHILDREN:
+Refer to pediatric burn center if:
+- > 10% TBSA any depth
+- > 2% TBSA full thickness
+- Burns to face, hands, feet, genitalia
+- Suspected child abuse
+- Significant inhalation injury
+- Electrical or chemical burns
+
+PAIN MANAGEMENT NOTE:
+Children require weight-based opioid dosing. Burns are extremely painful.
+Do not withhold analgesia during assessment and resuscitation.
+---
