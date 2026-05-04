@@ -119,3 +119,36 @@ def test_banner_html_survives_empty_dict():
     html = banner_html({})
     # Should produce some HTML without crashing
     assert "kpi-banner" in html or "PATIENT" in html
+
+
+# ── fluid_html / orders_html ─────────────────────────────────────────────────
+
+from renderers import fluid_html, orders_html
+
+
+def test_fluid_html_contains_parkland_and_brooke_totals():
+    html = fluid_html(_sample_results())
+    assert "5,400" in html or "5400" in html  # Parkland
+    assert "2,700" in html or "2700" in html  # Brooke
+
+
+def test_fluid_html_renders_catchup_alert_when_lagging():
+    html = fluid_html(_sample_results())
+    assert "Tertinggal" in html or "catch" in html.lower()
+    assert "385" in html  # catchup rate ~385.71
+
+
+def test_fluid_html_renders_passed_message_when_first_8h_passed():
+    r = _sample_results()
+    r["fluid"]["lag_status"] = "first_8h_passed"
+    r["fluid"]["catchup_rate_mlph"] = None
+    html = fluid_html(r)
+    assert "terlewat" in html.lower() or "passed" in html.lower()
+
+
+def test_orders_html_renders_disposition_and_checklist():
+    html = orders_html(_sample_results())
+    assert "Burn ICU" in html
+    assert "IV access" in html
+    assert "Lab" in html
+    assert "TBSA &gt; 20%" in html or "TBSA > 20%" in html  # reason rendered

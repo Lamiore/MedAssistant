@@ -180,3 +180,135 @@ def summary_html(r: dict) -> str:
       <div class="flag-row">{flag_html}</div>
     </div>
     """
+
+
+# ── fluid tab ────────────────────────────────────────────────────────────────
+
+def fluid_html(r: dict) -> str:
+    fluid = r.get("fluid", {})
+    brooke = r.get("brooke", {})
+    p = r.get("patient", {})
+    weight = p.get("weight", 0)
+
+    total = fluid.get("total_24h_ml", 0)
+    first8 = fluid.get("first_8h_ml", 0)
+    rest = fluid.get("next_16h_ml", 0)
+    rate1 = fluid.get("rate_first_8h_mlph", 0)
+    rate2 = fluid.get("rate_next_16h_mlph", 0)
+    lag = fluid.get("lag_status", "on_time")
+    catchup = fluid.get("catchup_rate_mlph")
+    rem = fluid.get("hours_remaining_first_8h", 8)
+    hours_since = r.get("hours_since", 0)
+
+    # Catch-up alert
+    if lag == "catching_up" and catchup is not None:
+        catchup_alert = f"""
+        <div class="alert-warn">
+          ⏱ <b>Tertinggal {hours_since:g} jam.</b> 8-jam pertama tinggal {rem:g} jam —
+          naikkan rate ke <b>~{catchup:g} mL/jam</b> sampai catch-up.
+        </div>
+        """
+    elif lag == "first_8h_passed":
+        catchup_alert = """
+        <div class="alert-warn">
+          ⚠ <b>8-jam pertama sudah terlewat</b> — titrasi cairan sesuai urine
+          output aktual (target 0.5–1 mL/kg/jam).
+        </div>
+        """
+    else:
+        catchup_alert = ""
+
+    brooke_total = brooke.get("total_24h_ml", 0)
+    weight_target = (
+        f"{0.5 * weight:.0f}–{1.0 * weight:.0f} mL/jam"
+        if weight else "—"
+    )
+
+    return f"""
+    <div class="tab-section">
+      <div class="card-primary">
+        <div class="sec-label" style="color:#1E40AF">PARKLAND (Default)</div>
+        <div class="big-num">{_fmt_int(total)} mL · Ringer Laktat · 24 jam</div>
+        <div class="muted kpi-hint">Rumus: 4 mL × {weight:g} kg × TBSA% · Target urine {weight_target}</div>
+      </div>
+    </div>
+
+    <div class="tab-section">
+      <div class="sec-label">📅 JADWAL PEMBERIAN</div>
+      <div class="grid-2">
+        <div class="card-soft">
+          <div class="muted kpi-hint">8 JAM PERTAMA</div>
+          <div class="num-md">{_fmt_int(first8)} mL</div>
+          <div class="muted kpi-hint">@ {rate1:.1f} mL/jam · dari saat kejadian</div>
+        </div>
+        <div class="card-soft">
+          <div class="muted kpi-hint">16 JAM BERIKUTNYA</div>
+          <div class="num-md">{_fmt_int(rest)} mL</div>
+          <div class="muted kpi-hint">@ {rate2:.1f} mL/jam</div>
+        </div>
+      </div>
+      {catchup_alert}
+    </div>
+
+    <div class="tab-section">
+      <div class="sec-label">📊 PERBANDINGAN FORMULA</div>
+      <table class="form-compare">
+        <thead><tr><th>Formula</th><th style="text-align:right">Total 24h</th><th>Cairan</th><th>Catatan</th></tr></thead>
+        <tbody>
+          <tr><td><b>Parkland</b> ⭐</td><td style="text-align:right;font-weight:700">{_fmt_int(total)} mL</td><td>RL</td><td class="muted">4 mL/kg/%</td></tr>
+          <tr><td>Modified Brooke</td><td style="text-align:right">{_fmt_int(brooke_total)} mL</td><td>RL</td><td class="muted">2 mL/kg/%</td></tr>
+          <tr><td>Galveston (peds)</td><td style="text-align:right" class="muted">— N/A —</td><td class="muted">—</td><td class="muted">untuk usia &lt; 14</td></tr>
+        </tbody>
+      </table>
+    </div>
+    """
+
+
+# ── orders tab ───────────────────────────────────────────────────────────────
+
+def orders_html(r: dict) -> str:
+    disposition = r.get("disposition") or "—"
+    reasons = r.get("disposition_reasons") or []
+    orders = r.get("orders") or []
+    disp_color = _disposition_color(disposition)
+
+    disp_bg = {
+        "#DC2626": "#FEE2E2", "#EA580C": "#FFEDD5",
+        "#2563EB": "#DBEAFE", "#16A34A": "#DCFCE7",
+    }.get(disp_color, "#F1F5F9")
+
+    reasons_html = "".join(
+        f"<li>{escape(reason)}</li>" for reason in reasons
+    ) or "<li class='muted'>—</li>"
+
+    orders_items = "".join(
+        f"<div class='order-item'>{'⚠' if o.startswith('⚠') else '☑'} {escape(o.lstrip('⚠ '))}</div>"
+        for o in orders
+    )
+
+    return f"""
+    <div class="tab-section">
+      <div class="card-disp" style="background:{disp_bg};border-left-color:{disp_color}">
+        <div class="sec-label" style="color:{disp_color}">DISPOSITION</div>
+        <div class="big-num" style="color:{disp_color}">→ {escape(disposition)}</div>
+        <ul class="reasons">{reasons_html}</ul>
+      </div>
+    </div>
+
+    <div class="tab-section">
+      <div class="sec-label">📋 INITIAL ORDERS CHECKLIST</div>
+      <div class="orders-list">
+        {orders_items}
+      </div>
+    </div>
+
+    <div class="tab-section">
+      <div class="sec-label">💊 PAIN & WOUND CARE</div>
+      <div class="muted kpi-hint">
+        <b>Analgesia:</b> Morfin titrasi sesuai NRS · target NRS &lt; 4 ·
+        re-evaluasi q5-10min<br>
+        <b>Wound:</b> Silver sulfadiazine 1% topical untuk derajat 2 ·
+        hydrogel/non-adherent untuk superficial · ganti dressing q24h
+      </div>
+    </div>
+    """
