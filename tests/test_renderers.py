@@ -87,3 +87,35 @@ def test_summary_html_renders_confidence_bar():
     html = summary_html(_sample_results())
     assert "HIGH" in html
     assert "confidence" in html.lower()
+
+
+# ── None-safety tests ────────────────────────────────────────────────────────
+
+def test_banner_html_survives_none_tbsa():
+    r = _sample_results()
+    r["ai"]["tbsa"] = None
+    html = banner_html(r)
+    # Should not crash; numeric default kicks in
+    assert "0.0" in html or "—" in html
+
+
+def test_banner_html_survives_none_severity_and_disposition():
+    r = _sample_results()
+    r["severity"] = None
+    r["disposition"] = None
+    html = banner_html(r)
+    assert "—" in html  # placeholders rendered
+
+
+def test_summary_html_survives_none_red_flags():
+    r = _sample_results()
+    r["red_flags"] = None
+    html = summary_html(r)
+    # Should render confidence section but with no flags
+    assert "CONFIDENCE" in html.upper()
+
+
+def test_banner_html_survives_empty_dict():
+    html = banner_html({})
+    # Should produce some HTML without crashing
+    assert "kpi-banner" in html or "PATIENT" in html

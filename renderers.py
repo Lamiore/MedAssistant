@@ -8,6 +8,7 @@ The results dict shape is the contract between analyze() and the renderers.
 See tests/test_renderers.py::_sample_results for the canonical example.
 """
 
+import math
 from html import escape
 
 
@@ -17,11 +18,15 @@ def _fmt_int(n) -> str:
     if n is None:
         return "—"
     try:
-        return f"{int(round(float(n))):,}"
+        f = float(n)
+        if not math.isfinite(f):
+            return "—"
+        return f"{int(round(f)):,}"
     except (TypeError, ValueError):
         return "—"
 
 
+# Used by fluid_html and orders_html (Tasks 5/6).
 def _fmt_pct(n, decimals=1) -> str:
     if n is None:
         return "—"
@@ -53,6 +58,13 @@ def _severity_icon(severity: str) -> str:
     return "🟢"
 
 
+def _severity_subtitle(tbsa: float) -> str:
+    if tbsa > 40: return "> 40% TBSA"
+    if tbsa > 20: return "> 20% TBSA"
+    if tbsa >= 10: return "10–20% TBSA"
+    return "< 10% TBSA"
+
+
 # ── banner ───────────────────────────────────────────────────────────────────
 
 def banner_html(r: dict) -> str:
@@ -65,15 +77,19 @@ def banner_html(r: dict) -> str:
     bsa = p.get("bsa_m2")
     bsa_str = f"BSA {bsa:.2f}m²" if isinstance(bsa, (int, float)) else "BSA —"
     mech = escape(str(p.get("mechanism", "—")))
-    age_cat = "Pediatric" if isinstance(age, int) and age < 14 else (
-        "Geriatric" if isinstance(age, int) and age >= 65 else "Adult"
-    )
+    try:
+        age_n = int(age)
+    except (TypeError, ValueError):
+        age_n = None
+    age_cat = ("Pediatric" if age_n is not None and age_n < 14
+               else "Geriatric" if age_n is not None and age_n >= 65
+               else "Adult")
 
-    tbsa = ai.get("tbsa", 0.0)
+    tbsa = float(ai.get("tbsa") or 0.0)
     degree = escape(str(ai.get("burn_degree", "—")))
-    severity = r.get("severity", "—")
+    severity = r.get("severity") or "—"
     sev_icon = _severity_icon(severity)
-    disposition = r.get("disposition", "—")
+    disposition = r.get("disposition") or "—"
     disp_color = _disposition_color(disposition)
     fluid_total = fluid.get("total_24h_ml")
 
@@ -83,7 +99,7 @@ def banner_html(r: dict) -> str:
       <div class="kpi-grid">
         <div class="kpi-tile">
           <div class="kpi-key">PASIEN</div>
-          <div class="kpi-val">{age}y · {weight}kg · {bsa_str}</div>
+          <div class="kpi-val">{escape(str(age))}y · {escape(str(weight))}kg · {bsa_str}</div>
           <div class="kpi-sub">{age_cat} · {mech}</div>
         </div>
         <div class="kpi-tile">
@@ -104,25 +120,18 @@ def banner_html(r: dict) -> str:
         <div class="kpi-tile">
           <div class="kpi-key">DISPOSITION</div>
           <div class="kpi-val" style="color:{disp_color}">→ {escape(disposition)}</div>
-          <div class="kpi-sub">{("ABA criteria met" if disposition != "Outpatient / Klinik Rawat Jalan" else "—")}</div>
+          <div class="kpi-sub">{("ABA criteria met" if "outpatient" not in disposition.lower() else "—")}</div>
         </div>
       </div>
     </div>
     """
 
 
-def _severity_subtitle(tbsa: float) -> str:
-    if tbsa > 40: return "> 40% TBSA"
-    if tbsa > 20: return "> 20% TBSA"
-    if tbsa >= 10: return "10–20% TBSA"
-    return "< 10% TBSA"
-
-
 # ── summary tab ──────────────────────────────────────────────────────────────
 
 def summary_html(r: dict) -> str:
     ai = r.get("ai", {})
-    flags = r.get("red_flags", [])
+    flags = r.get("red_flags") or []
 
     degree = escape(str(ai.get("burn_degree", "—")))
     areas = ", ".join(escape(a) for a in ai.get("areas", [])) or "—"
@@ -163,7 +172,7 @@ def summary_html(r: dict) -> str:
         <div class="conf-bar"><div class="conf-fill" style="width:{conf_pct}%;background:linear-gradient(to right,#FBBF24,#34D399)"></div></div>
         <div style="font-weight:700;color:{conf_color}">{conf_label} ({conf_pct}%)</div>
       </div>
-      <div class="muted small">Konfirmasi manual dengan Lund-Browder chart fisik tetap dianjurkan.</div>
+      <div class="muted kpi-hint">Konfirmasi manual dengan Lund-Browder chart fisik tetap dianjurkan.</div>
     </div>
 
     <div class="tab-section">
