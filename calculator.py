@@ -7,6 +7,8 @@ Burn Assessment Calculator
 - Burn severity classification
 """
 
+import math
+
 # ─────────────────────────────────────────────
 # Lund-Browder Age-Dependent Table (% per area)
 # ─────────────────────────────────────────────
@@ -206,9 +208,6 @@ def get_warning_message(tbsa: float, age: int) -> str:
     return " | ".join(warnings) if warnings else ""
 
 
-import math
-
-
 def mosteller_bsa(weight_kg: float, height_cm) -> float | None:
     """
     Mosteller BSA formula: sqrt((height_cm * weight_kg) / 3600).
@@ -259,18 +258,18 @@ def parkland_with_lag(weight_kg: float, tbsa_percent: float, hours_since: float)
         hours_remaining_first_8h – hours left in the first-8h window
         lag_status            – "on_time" | "catching_up" | "first_8h_passed"
     """
-    base = calculate_parkland(weight_kg, tbsa_percent)
+    base = dict(calculate_parkland(weight_kg, tbsa_percent))
     if hours_since <= 0:
         base["catchup_rate_mlph"] = base["rate_first_8h_mlph"]
-        base["hours_remaining_first_8h"] = 8
+        base["hours_remaining_first_8h"] = 8.0
         base["lag_status"] = "on_time"
     elif hours_since < 8:
         remaining = 8 - hours_since
         base["catchup_rate_mlph"] = round(base["first_8h_ml"] / remaining, 2)
-        base["hours_remaining_first_8h"] = remaining
+        base["hours_remaining_first_8h"] = float(remaining)
         base["lag_status"] = "catching_up"
     else:
         base["catchup_rate_mlph"] = None
-        base["hours_remaining_first_8h"] = 0
+        base["hours_remaining_first_8h"] = 0.0
         base["lag_status"] = "first_8h_passed"
     return base

@@ -114,7 +114,7 @@ def test_parkland_with_lag_mid_lag():
     result = parkland_with_lag(weight_kg=60, tbsa_percent=22.5, hours_since=1)
     assert abs(result["catchup_rate_mlph"] - 385.71) < 0.1
     assert result["lag_status"] == "catching_up"
-    assert result["hours_remaining_first_8h"] == 7
+    assert result["hours_remaining_first_8h"] == 7.0
 
 
 def test_parkland_with_lag_eight_or_more_hours_late():
@@ -122,7 +122,7 @@ def test_parkland_with_lag_eight_or_more_hours_late():
     result = parkland_with_lag(weight_kg=60, tbsa_percent=22.5, hours_since=8)
     assert result["lag_status"] == "first_8h_passed"
     assert result["catchup_rate_mlph"] is None
-    assert result["hours_remaining_first_8h"] == 0
+    assert result["hours_remaining_first_8h"] == 0.0
 
 
 def test_parkland_with_lag_well_past_first_8h():
