@@ -150,3 +150,4 @@ pytest tests/ -v
 ```
 
 Smoke tests that hit Gemini are skipped automatically if `GEMINI_API_KEY` is unset or still the placeholder.
+# MedAssistant
