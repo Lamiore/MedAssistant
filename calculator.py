@@ -204,3 +204,73 @@ def get_warning_message(tbsa: float, age: int) -> str:
             "Risiko komplikasi meningkat signifikan. Refer ke burn center."
         )
     return " | ".join(warnings) if warnings else ""
+
+
+import math
+
+
+def mosteller_bsa(weight_kg: float, height_cm) -> float | None:
+    """
+    Mosteller BSA formula: sqrt((height_cm * weight_kg) / 3600).
+
+    Returns None if height or weight is missing/invalid (cannot compute BSA
+    without both). Caller should display "—" when None is returned.
+    """
+    if not height_cm or weight_kg <= 0:
+        return None
+    try:
+        h = float(height_cm)
+        w = float(weight_kg)
+    except (TypeError, ValueError):
+        return None
+    if h <= 0 or w <= 0:
+        return None
+    return round(math.sqrt((h * w) / 3600.0), 3)
+
+
+def modified_brooke(weight_kg: float, tbsa_percent: float) -> dict:
+    """
+    Modified Brooke formula: 2 mL × weight(kg) × TBSA(%).
+    Same shape as calculate_parkland() return dict for consistency.
+    """
+    total = 2.0 * weight_kg * tbsa_percent
+    first_half = total / 2.0
+    second_half = total / 2.0
+    return {
+        "total_24h_ml":        round(total, 2),
+        "first_8h_ml":         round(first_half, 2),
+        "next_16h_ml":         round(second_half, 2),
+        "fluid_type":          "Ringer's Lactate",
+        "rate_first_8h_mlph":  round(first_half / 8.0, 2) if total else 0.0,
+        "rate_next_16h_mlph":  round(second_half / 16.0, 2) if total else 0.0,
+    }
+
+
+def parkland_with_lag(weight_kg: float, tbsa_percent: float, hours_since: float) -> dict:
+    """
+    Parkland with catch-up rate when patient presents late.
+
+    The Parkland formula schedules half the 24h volume in the first 8 hours
+    *from time of injury* (not from arrival). When hours_since > 0, the rate
+    must be increased so the prescribed first-8h volume is delivered by hour 8.
+
+    Returns the standard Parkland dict plus:
+        catchup_rate_mlph     – mL/hour for remaining first-8h window, or None
+        hours_remaining_first_8h – hours left in the first-8h window
+        lag_status            – "on_time" | "catching_up" | "first_8h_passed"
+    """
+    base = calculate_parkland(weight_kg, tbsa_percent)
+    if hours_since <= 0:
+        base["catchup_rate_mlph"] = base["rate_first_8h_mlph"]
+        base["hours_remaining_first_8h"] = 8
+        base["lag_status"] = "on_time"
+    elif hours_since < 8:
+        remaining = 8 - hours_since
+        base["catchup_rate_mlph"] = round(base["first_8h_ml"] / remaining, 2)
+        base["hours_remaining_first_8h"] = remaining
+        base["lag_status"] = "catching_up"
+    else:
+        base["catchup_rate_mlph"] = None
+        base["hours_remaining_first_8h"] = 0
+        base["lag_status"] = "first_8h_passed"
+    return base
