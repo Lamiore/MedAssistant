@@ -115,3 +115,37 @@ def test_red_flags_tbsa_threshold_not_active_below_20():
     flags = red_flags(tbsa=18.0, inhalation=False, circumferential=False, comorbid=[])
     flag_map = dict(flags)
     assert flag_map["TBSA > 20%"] is False
+
+
+# ── Boundary tests ───────────────────────────────────────────────────────────
+
+def test_classify_burn_center_at_exact_tbsa_20():
+    # Strict >20 threshold: exactly 20% must NOT escalate to ICU.
+    disposition, _ = classify(**_kwargs(tbsa=20.0))
+    assert "Burn Center" in disposition
+    assert "ICU" not in disposition
+
+
+def test_classify_age_5_is_not_pediatric():
+    # Pediatric uses age < 5; age=5 must not match.
+    disposition, _ = classify(**_kwargs(tbsa=5.0, age=5))
+    assert disposition == "Bangsal Bedah / Burn Unit"
+
+
+def test_classify_geriatric_without_comorbid_is_not_escalated():
+    # Geriatric criterion requires comorbid; bare age >=65 must not escalate.
+    disposition, reasons = classify(**_kwargs(tbsa=8.0, age=65, comorbid=[]))
+    assert disposition == "Bangsal Bedah / Burn Unit"
+    assert not any("Comorbid" in r for r in reasons)
+
+
+def test_classify_handles_generator_comorbid():
+    # `comorbid` is typed Iterable[str]; verify a generator (one-shot iterator)
+    # works correctly and the comorbid names appear in the reason string.
+    disposition, reasons = classify(**_kwargs(
+        tbsa=8.0, age=70, comorbid=iter(["DM", "CKD"]),
+    ))
+    assert "Burn Center" in disposition
+    comorbid_reason = next(r for r in reasons if "Comorbid" in r)
+    assert "DM" in comorbid_reason
+    assert "CKD" in comorbid_reason

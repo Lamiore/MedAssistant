@@ -35,11 +35,12 @@ def classify(
     `reasons` is a human-readable list of which criteria fired.
     """
     reasons: list[str] = []
+    comorbid_list: list[str] = list(comorbid)
 
     is_third_degree = "Third degree" in (burn_degree or "")
     is_pediatric = age < 5
     is_geriatric = age >= 65
-    has_comorbid = bool(list(comorbid))
+    has_comorbid = bool(comorbid_list)
 
     # ABA Burn Center Referral Criteria
     if tbsa >= 10.0:
@@ -57,7 +58,7 @@ def classify(
     if is_pediatric and tbsa >= 5.0:
         reasons.append(f"Pediatric (age {age}) with TBSA ≥ 5%")
     if is_geriatric and has_comorbid:
-        reasons.append(f"Comorbid + age ≥65 ({', '.join(comorbid)})")
+        reasons.append(f"Comorbid + age ≥65 ({', '.join(comorbid_list)})")
 
     # Escalation to ICU
     icu_reasons: list[str] = []
@@ -93,9 +94,10 @@ def red_flags(
 
     Order is stable so the UI can render "active" red and "clear" gray reliably.
     """
+    comorbid_list: list[str] = list(comorbid)
     return [
         ("Inhalation injury", bool(inhalation)),
         ("Circumferential burn", bool(circumferential)),
-        ("Komorbid", bool(list(comorbid))),
+        ("Komorbid", bool(comorbid_list)),
         ("TBSA > 20%", tbsa > 20.0),
     ]
