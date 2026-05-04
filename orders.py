@@ -9,7 +9,6 @@ Pure function: inputs in, list of order strings out. No I/O.
 def build_checklist(
     *,
     tbsa: float,
-    age: int,
     weight_kg: float,
     mechanism: str,
     inhalation: bool,

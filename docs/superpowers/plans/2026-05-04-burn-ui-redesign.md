@@ -501,7 +501,7 @@ from orders import build_checklist
 
 def _kwargs(**overrides):
     base = dict(
-        tbsa=15.0, age=30, weight_kg=60,
+        tbsa=15.0, weight_kg=60,
         mechanism="Thermal", inhalation=False, circumferential=False,
     )
     base.update(overrides)
@@ -591,7 +591,6 @@ Pure function: inputs in, list of order strings out. No I/O.
 def build_checklist(
     *,
     tbsa: float,
-    age: int,
     weight_kg: float,
     mechanism: str,
     inhalation: bool,
@@ -1535,7 +1534,7 @@ def analyze(image_path, age, weight, height, hours_since,
         circumferential=circumferential_b, comorbid=comorbid_list,
     )
     order_list = build_checklist(
-        tbsa=tbsa, age=age_i, weight_kg=weight_f, mechanism=mechanism_s,
+        tbsa=tbsa, weight_kg=weight_f, mechanism=mechanism_s,
         inhalation=inhalation_b, circumferential=circumferential_b,
     )
 

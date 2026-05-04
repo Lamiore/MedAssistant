@@ -9,7 +9,7 @@ from orders import build_checklist
 
 def _kwargs(**overrides):
     base = dict(
-        tbsa=15.0, age=30, weight_kg=60,
+        tbsa=15.0, weight_kg=60,
         mechanism="Thermal", inhalation=False, circumferential=False,
     )
     base.update(overrides)
@@ -61,11 +61,11 @@ def test_circumferential_adds_escharotomy_consult():
 
 
 def test_analgesia_dose_uses_weight():
-    # 60 kg → morphine 3-6 mg (0.05-0.1 mg/kg)
+    # 60 kg → morphine range 0.05*60=3.0 to 0.1*60=6.0 mg
     items = build_checklist(**_kwargs(weight_kg=60))
-    text = " | ".join(items)
-    assert "3" in text and "6" in text  # range present
-    assert "mg" in text.lower()
+    analgesia = next(i for i in items if "Analgesia" in i)
+    assert "3-6" in analgesia
+    assert "mg" in analgesia.lower()
 
 
 def test_central_line_added_for_large_tbsa():
@@ -73,3 +73,9 @@ def test_central_line_added_for_large_tbsa():
     items_high = build_checklist(**_kwargs(tbsa=35.0))
     assert not any("central" in i.lower() for i in items_low)
     assert any("central" in i.lower() for i in items_high)
+
+
+def test_ngt_not_added_at_exact_tbsa_20():
+    # NGT uses strict >20: exactly 20% must NOT add NGT.
+    items = build_checklist(**_kwargs(tbsa=20.0))
+    assert not any("NGT" in i for i in items)
