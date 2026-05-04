@@ -26,7 +26,8 @@ def test_classify_minor_burn_outpatient():
 
 
 def test_classify_moderate_to_ward():
-    disposition, reasons = classify(**_kwargs(tbsa=12.0))
+    # tbsa=7 falls in the 5–10% range: no ABA criterion fires, ward disposition.
+    disposition, reasons = classify(**_kwargs(tbsa=7.0))
     assert disposition == "Bangsal Bedah / Burn Unit"
     assert any("TBSA" in r for r in reasons)
 
