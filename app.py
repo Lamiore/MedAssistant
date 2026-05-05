@@ -319,24 +319,111 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *,body,.gradio-container{font-family:'Inter','Segoe UI',Arial,sans-serif!important}
 body,.gradio-container{background:#F1F5F9!important;color:#1E293B!important}
-.hdr{background:linear-gradient(135deg,#1D4ED8,#1E40AF);border-radius:14px;padding:26px 32px;margin-bottom:20px}
-.hdr h1{font-size:1.65rem;font-weight:700;color:#fff!important;margin:0 0 6px 0}
-.hdr p{color:#BFDBFE!important;margin:0;font-size:.85rem;line-height:1.6}
+
+/* Header */
+.hdr{background:linear-gradient(135deg,#1D4ED8,#1E40AF);border-radius:12px;
+     padding:22px 28px;margin-bottom:14px}
+.hdr h1{font-size:1.6rem;font-weight:700;color:#fff!important;margin:0 0 4px 0}
+.hdr p{color:#BFDBFE!important;margin:0;font-size:.82rem;line-height:1.6}
+
+/* Section labels */
 .sec{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
-     color:#1D4ED8;padding-bottom:6px;border-bottom:2px solid #DBEAFE;margin:18px 0 10px}
-.gradio-container label{color:#475569!important;font-size:.77rem!important;font-weight:600!important}
-.gradio-container textarea,.gradio-container input[type=number]{
+     color:#1D4ED8;padding-bottom:5px;border-bottom:2px solid #DBEAFE;margin:16px 0 10px}
+.sec-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+           color:#1D4ED8;margin-bottom:6px}
+
+/* Inputs */
+.gradio-container label{color:#475569!important;font-size:.78rem!important;font-weight:600!important}
+.gradio-container textarea,.gradio-container input[type=number],
+.gradio-container input[type=text],.gradio-container select{
     background:#fff!important;border:1px solid #CBD5E1!important;
-    color:#1E293B!important;border-radius:8px!important;font-size:.88rem!important}
+    color:#1E293B!important;border-radius:6px!important;font-size:.88rem!important}
+
+/* Submit button */
 .btn button{background:#1D4ED8!important;color:#fff!important;font-weight:700!important;
-    font-size:1rem!important;border-radius:8px!important;border:none!important;
-    padding:14px!important;width:100%!important;
+    font-size:.95rem!important;border-radius:7px!important;border:none!important;
+    padding:13px!important;width:100%!important;
     box-shadow:0 2px 12px rgba(29,78,216,.35)!important}
 .btn button:hover{background:#1E40AF!important}
-.warn textarea{background:#FFF7ED!important;border:1px solid #FED7AA!important;
-    color:#92400E!important;font-weight:600!important}
-.ftr{text-align:center;color:#94A3B8;font-size:.75rem;
-    margin-top:24px;padding:16px;border-top:1px solid #E2E8F0}
+
+/* KPI banner */
+.kpi-banner{background:#fff;border:1px solid #1D4ED8;border-left:5px solid #1D4ED8;
+            border-radius:8px;padding:14px 18px;margin-bottom:10px}
+.kpi-label{font-size:.6rem;color:#1D4ED8;text-transform:uppercase;font-weight:700;
+           letter-spacing:1.5px;margin-bottom:8px}
+.kpi-grid{display:grid;grid-template-columns:1.4fr 1fr 1.2fr 1fr 1.3fr;gap:14px}
+.kpi-tile{}
+.kpi-key{font-size:.62rem;color:#64748B;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.kpi-val{font-size:.95rem;font-weight:700;color:#1E293B;line-height:1.15;margin-top:2px}
+.kpi-big{font-size:1.4rem!important}
+.kpi-sub{font-size:.7rem;color:#64748B;margin-top:1px}
+
+/* Tab sections */
+.tab-section{margin-bottom:14px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:.82rem;line-height:1.6}
+.muted{color:#64748B}
+.kpi-hint{font-size:.74rem}
+
+/* Cards */
+.card-primary{background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #1D4ED8;
+              border-radius:6px;padding:11px 14px}
+.card-soft{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:10px 12px}
+.card-disp{border:1px solid;border-left:4px solid;border-radius:6px;padding:11px 14px}
+.big-num{font-size:.95rem;font-weight:700;color:#1E293B;margin-top:3px}
+.num-md{font-size:1rem;font-weight:700}
+.reasons{margin:6px 0 0 18px;font-size:.78rem;color:#475569;line-height:1.6}
+
+/* Confidence bar */
+.conf-row{display:flex;align-items:center;gap:10px;font-size:.82rem}
+.conf-bar{flex:1;background:#F1F5F9;height:9px;border-radius:5px;overflow:hidden}
+.conf-fill{height:100%;border-radius:5px}
+
+/* Red flag chips */
+.flag-row{display:flex;flex-wrap:wrap;gap:5px}
+.flag-chip{padding:4px 10px;border-radius:99px;font-size:.78rem;font-weight:600}
+.flag-clear{font-weight:400!important}
+
+/* Orders list */
+.orders-list{font-size:.82rem;line-height:1.85}
+.order-item{padding:1px 0}
+
+/* Formula compare table */
+.form-compare{width:100%;border-collapse:collapse;font-size:.8rem}
+.form-compare thead{background:#F1F5F9}
+.form-compare th{text-align:left;padding:6px 8px;border-bottom:2px solid #CBD5E1}
+.form-compare td{padding:5px 8px;border-bottom:1px solid #E2E8F0}
+
+/* Timeline */
+.timeline{list-style:none;padding:0 0 0 18px;margin:0;border-left:2px solid #DBEAFE}
+.tl-item{position:relative;padding-bottom:10px}
+.tl-dot{position:absolute;left:-23px;top:2px;width:8px;height:8px;background:#fff;
+        border:2px solid #1D4ED8;border-radius:50%}
+.tl-dot-active{background:#1D4ED8;box-shadow:0 0 0 2px #1D4ED8}
+.tl-active .tl-time{color:#1E40AF}
+.tl-time{font-size:.82rem;font-weight:700;color:#475569}
+.tl-body{font-size:.78rem;color:#475569;margin-top:2px}
+
+/* RAG block */
+.rag-block{background:#F8FAFC;border-radius:6px;padding:10px 12px;
+           font-size:.82rem;line-height:1.7;color:#1E293B;white-space:pre-wrap}
+.refs{margin:0 0 0 18px;font-size:.78rem;color:#475569;line-height:1.7}
+
+/* Alerts */
+.alert-warn{background:#FFF7ED;border:1px solid #FED7AA;border-radius:5px;
+            padding:8px 11px;font-size:.78rem;color:#92400E;margin-top:6px}
+
+/* Hint card */
+.hint{background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #1D4ED8;
+      border-radius:7px;padding:10px 13px;font-size:.78rem;color:#1E40AF;line-height:1.7;margin-top:10px}
+
+/* Risk checkbox cards */
+.risk-card label{background:#FFF7ED!important;border:1px solid #FED7AA!important;
+                 padding:6px 8px!important;border-radius:5px!important;
+                 color:#92400E!important;display:block!important;margin-bottom:5px!important}
+
+/* Footer */
+.ftr{text-align:center;color:#94A3B8;font-size:.74rem;margin-top:22px;
+     padding:14px;border-top:1px solid #E2E8F0}
 """
 
 
@@ -345,65 +432,82 @@ def build_ui():
         gr.HTML("""
         <div class="hdr">
           <h1>🏥 Sistem Penilaian Luka Bakar</h1>
-          <p>Deteksi AI Otomatis (Gemini) &nbsp;|&nbsp; Lund-Browder Chart &nbsp;|&nbsp; Formula Parkland</p>
+          <p>Clinical Decision Aid · Lund-Browder · Parkland · ABA Burn Center Criteria</p>
         </div>""")
 
         with gr.Row(equal_height=False):
+            # ── Sidebar (left) ──────────────────────────────────────────────
             with gr.Column(scale=1, min_width=340):
                 gr.HTML('<p class="sec">📷 Foto Luka Bakar</p>')
-                img_in = gr.Image(type="filepath", label="Upload Foto Luka Bakar", height=260)
+                img_in = gr.Image(type="filepath", label="Upload Foto", height=220)
 
                 gr.HTML('<p class="sec">👤 Data Pasien</p>')
                 with gr.Row():
-                    age_in = gr.Number(value=25, label="Usia (tahun)", minimum=0, maximum=120, precision=0)
-                    wt_in = gr.Number(value=60, label="Berat Badan (kg)", minimum=1, maximum=300, precision=1)
+                    age_in = gr.Number(value=25, label="Usia (th)",
+                                       minimum=0, maximum=120, precision=0)
+                    wt_in = gr.Number(value=60, label="Berat (kg)",
+                                      minimum=1, maximum=300, precision=1)
+                with gr.Row():
+                    ht_in = gr.Number(value=None, label="Tinggi (cm) — opt",
+                                      minimum=30, maximum=250, precision=1)
+                    hrs_in = gr.Number(value=1, label="Jam sejak luka",
+                                       minimum=0, maximum=72, precision=1)
 
-                gr.HTML('<div style="height:10px"></div>')
+                gr.HTML('<p class="sec">⚕️ Mekanisme & Risiko</p>')
+                mech_in = gr.Dropdown(
+                    choices=["Thermal", "Electrical", "Chemical"],
+                    value="Thermal", label="Mekanisme cedera",
+                )
+                with gr.Group(elem_classes=["risk-card"]):
+                    inhal_in = gr.Checkbox(label="Suspek inhalation injury (face/neck burn, hoarse, soot)")
+                    circ_in = gr.Checkbox(label="Circumferential burn (melilit ekstremitas / dada)")
+                comorb_in = gr.CheckboxGroup(
+                    choices=["DM", "CKD", "Jantung", "Hamil"],
+                    value=[], label="Komorbid (opt)",
+                )
+
                 with gr.Row(elem_classes=["btn"]):
                     btn = gr.Button("🔍  Analisis Luka Bakar", variant="primary")
 
                 gr.HTML("""
-                <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #1D4ED8;
-                     border-radius:8px;padding:10px 14px;font-size:.79rem;color:#1E40AF;
-                     line-height:1.8;margin-top:10px">
+                <div class="hint">
                   <b>Petunjuk:</b><br>
                   1. Upload foto luka bakar yang jelas<br>
-                  2. Isi usia dan berat badan pasien<br>
-                  3. Klik <em>Analisis Luka Bakar</em><br>
-                  4. Tunggu 15–60 detik<br>
-                  5. Jika gagal, klik sekali lagi
+                  2. Isi data pasien & mekanisme<br>
+                  3. Klik <em>Analisis</em> · tunggu 15-60 detik<br>
+                  4. Jika gagal, klik sekali lagi<br>
+                  <br>
+                  <em>Jam sejak luka</em> dipakai untuk menghitung catch-up rate Parkland bila pasien datang terlambat.
                 </div>""")
 
-            with gr.Column(scale=1, min_width=420):
-                gr.HTML('<p class="sec">📊 Estimasi TBSA</p>')
-                tbsa_out = gr.Textbox(label="Hasil Deteksi AI + TBSA (Lund-Browder)",
-                                      lines=4, interactive=False)
-                with gr.Row():
-                    deg_out = gr.Textbox(label="Derajat Luka Bakar", lines=1, interactive=False)
-                    sev_out = gr.Textbox(label="Klasifikasi Keparahan", lines=1, interactive=False)
+            # ── Output area (right) ─────────────────────────────────────────
+            with gr.Column(scale=2, min_width=520):
+                banner_out = gr.HTML(value='<div class="kpi-banner"><div class="kpi-label">PATIENT BANNER · KPI</div><div class="muted kpi-hint">Hasil akan tampil setelah Analisis.</div></div>')
 
-                gr.HTML('<p class="sec">💧 Terapi Cairan — Formula Parkland</p>')
-                fluid_out = gr.Textbox(label="Total Cairan 24 Jam", lines=3, interactive=False)
-                sched_out = gr.Textbox(label="Jadwal Pemberian Cairan", lines=7, interactive=False)
-
-                gr.HTML('<p class="sec">📝 Rekomendasi Klinis (RAG)</p>')
-                rag_out = gr.Textbox(label="Panduan Manajemen Klinis", lines=12, interactive=False)
-                refs_out = gr.Textbox(label="Referensi", lines=3, interactive=False)
-                warn_out = gr.Textbox(label="⚠️ Peringatan Klinis",
-                                      lines=3, interactive=False, elem_classes=["warn"])
+                with gr.Tabs():
+                    with gr.Tab("📊 Ringkasan"):
+                        summary_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
+                    with gr.Tab("💧 Cairan"):
+                        fluid_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
+                    with gr.Tab("📋 Orders"):
+                        orders_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
+                    with gr.Tab("⏱ Monitoring"):
+                        monitoring_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
+                    with gr.Tab("📚 Edukasi & Refs"):
+                        education_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
 
         gr.HTML("""
         <div class="ftr">
-          Sistem Penilaian Luka Bakar &nbsp;|&nbsp; Lund-Browder Chart &nbsp;|&nbsp;
-          Formula Parkland (Baxter CR, 1974)<br>
+          Sistem Penilaian Luka Bakar · Lund-Browder · Parkland (Baxter, 1974) · ABA Criteria<br>
           Alat bantu klinis — keputusan akhir tetap pada tenaga medis.
         </div>""")
 
         btn.click(
             fn=analyze,
-            inputs=[img_in, age_in, wt_in],
-            outputs=[tbsa_out, deg_out, sev_out,
-                     fluid_out, sched_out, rag_out, refs_out, warn_out],
+            inputs=[img_in, age_in, wt_in, ht_in, hrs_in,
+                    mech_in, inhal_in, circ_in, comorb_in],
+            outputs=[banner_out, summary_out, fluid_out,
+                     orders_out, monitoring_out, education_out],
             show_progress=True,
         )
 
