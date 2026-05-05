@@ -349,11 +349,10 @@ body,.gradio-container{background:#F1F5F9!important;color:#1E293B!important}
 /* KPI banner */
 .kpi-banner{background:#fff;border:1px solid #1D4ED8;border-left:5px solid #1D4ED8;
             border-radius:8px;padding:14px 18px;margin-bottom:10px}
-.kpi-label{font-size:.6rem;color:#1D4ED8;text-transform:uppercase;font-weight:700;
+.kpi-label{font-size:.68rem;color:#1D4ED8;text-transform:uppercase;font-weight:700;
            letter-spacing:1.5px;margin-bottom:8px}
 .kpi-grid{display:grid;grid-template-columns:1.4fr 1fr 1.2fr 1fr 1.3fr;gap:14px}
-.kpi-tile{}
-.kpi-key{font-size:.62rem;color:#64748B;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.kpi-key{font-size:.68rem;color:#64748B;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
 .kpi-val{font-size:.95rem;font-weight:700;color:#1E293B;line-height:1.15;margin-top:2px}
 .kpi-big{font-size:1.4rem!important}
 .kpi-sub{font-size:.7rem;color:#64748B;margin-top:1px}
@@ -422,7 +421,7 @@ body,.gradio-container{background:#F1F5F9!important;color:#1E293B!important}
                  color:#92400E!important;display:block!important;margin-bottom:5px!important}
 
 /* Footer */
-.ftr{text-align:center;color:#94A3B8;font-size:.74rem;margin-top:22px;
+.ftr{text-align:center;color:#64748B;font-size:.74rem;margin-top:22px;
      padding:14px;border-top:1px solid #E2E8F0}
 """
 
@@ -450,10 +449,10 @@ def build_ui():
                 with gr.Row():
                     ht_in = gr.Number(value=None, label="Tinggi (cm) — opt",
                                       minimum=30, maximum=250, precision=1)
-                    hrs_in = gr.Number(value=1, label="Jam sejak luka",
+                    hrs_in = gr.Number(value=0, label="Jam sejak luka",
                                        minimum=0, maximum=72, precision=1)
 
-                gr.HTML('<p class="sec">⚕️ Mekanisme & Risiko</p>')
+                gr.HTML('<p class="sec">⚕️ Mekanisme &amp; Risiko</p>')
                 mech_in = gr.Dropdown(
                     choices=["Thermal", "Electrical", "Chemical"],
                     value="Thermal", label="Mekanisme cedera",
@@ -473,7 +472,7 @@ def build_ui():
                 <div class="hint">
                   <b>Petunjuk:</b><br>
                   1. Upload foto luka bakar yang jelas<br>
-                  2. Isi data pasien & mekanisme<br>
+                  2. Isi data pasien &amp; mekanisme<br>
                   3. Klik <em>Analisis</em> · tunggu 15-60 detik<br>
                   4. Jika gagal, klik sekali lagi<br>
                   <br>
