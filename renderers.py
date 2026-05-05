@@ -188,17 +188,17 @@ def fluid_html(r: dict) -> str:
     fluid = r.get("fluid", {})
     brooke = r.get("brooke", {})
     p = r.get("patient", {})
-    weight = p.get("weight", 0)
+    weight = p.get("weight") or 0
 
-    total = fluid.get("total_24h_ml", 0)
-    first8 = fluid.get("first_8h_ml", 0)
-    rest = fluid.get("next_16h_ml", 0)
-    rate1 = fluid.get("rate_first_8h_mlph", 0)
-    rate2 = fluid.get("rate_next_16h_mlph", 0)
-    lag = fluid.get("lag_status", "on_time")
-    catchup = fluid.get("catchup_rate_mlph")
-    rem = fluid.get("hours_remaining_first_8h", 8)
-    hours_since = r.get("hours_since", 0)
+    total = fluid.get("total_24h_ml") or 0
+    first8 = fluid.get("first_8h_ml") or 0
+    rest = fluid.get("next_16h_ml") or 0
+    rate1 = fluid.get("rate_first_8h_mlph") or 0
+    rate2 = fluid.get("rate_next_16h_mlph") or 0
+    lag = fluid.get("lag_status") or "on_time"
+    catchup = fluid.get("catchup_rate_mlph")  # genuinely Optional, kept as-is
+    rem = fluid.get("hours_remaining_first_8h") or 8
+    hours_since = r.get("hours_since") or 0
 
     # Catch-up alert
     if lag == "catching_up" and catchup is not None:
@@ -282,9 +282,9 @@ def orders_html(r: dict) -> str:
     ) or "<li class='muted'>—</li>"
 
     orders_items = "".join(
-        f"<div class='order-item'>{'⚠' if o.startswith('⚠') else '☑'} {escape(o.lstrip('⚠ '))}</div>"
+        f"<div class='order-item'>{'⚠' if o.startswith('⚠') else '☑'} {escape(o.removeprefix('⚠ '))}</div>"
         for o in orders
-    )
+    ) or "<div class='order-item muted'>—</div>"
 
     return f"""
     <div class="tab-section">

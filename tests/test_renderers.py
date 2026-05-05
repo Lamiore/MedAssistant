@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from renderers import banner_html, summary_html
+from renderers import banner_html, summary_html, fluid_html, orders_html
 
 
 def _sample_results():
@@ -123,9 +123,6 @@ def test_banner_html_survives_empty_dict():
 
 # ── fluid_html / orders_html ─────────────────────────────────────────────────
 
-from renderers import fluid_html, orders_html
-
-
 def test_fluid_html_contains_parkland_and_brooke_totals():
     html = fluid_html(_sample_results())
     assert "5,400" in html or "5400" in html  # Parkland
@@ -152,3 +149,28 @@ def test_orders_html_renders_disposition_and_checklist():
     assert "IV access" in html
     assert "Lab" in html
     assert "TBSA &gt; 20%" in html or "TBSA > 20%" in html  # reason rendered
+
+
+def test_orders_html_renders_warning_order_with_alert_icon():
+    r = _sample_results()
+    r["orders"] = ["⚠ Intubasi-ready — early intubation if stridor"]
+    html = orders_html(r)
+    assert "⚠" in html
+    assert "☑" not in html
+    assert "Intubasi-ready" in html
+
+
+def test_fluid_html_survives_none_rate_fields():
+    r = _sample_results()
+    r["fluid"]["rate_first_8h_mlph"] = None
+    r["fluid"]["rate_next_16h_mlph"] = None
+    r["fluid"]["hours_remaining_first_8h"] = None
+    html = fluid_html(r)
+    # Should not crash; falls back to 0 / 8 defaults
+    assert "Parkland" in html or "PARKLAND" in html
+
+
+def test_fluid_html_survives_empty_dict():
+    html = fluid_html({})
+    # Should produce HTML without crashing
+    assert "tab-section" in html or "PARKLAND" in html
