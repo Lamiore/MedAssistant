@@ -13,6 +13,7 @@ import json
 import os
 import re
 import time
+from html import escape
 
 from dotenv import load_dotenv
 from google import genai
@@ -20,9 +21,14 @@ from google.genai import types
 from PIL import Image
 
 from calculator import (
-    calculate_parkland,
-    classify_burn_severity,
-    get_warning_message,
+    calculate_parkland, classify_burn_severity, get_warning_message,
+    modified_brooke, mosteller_bsa, parkland_with_lag,
+)
+from triage import classify, red_flags
+from orders import build_checklist
+from renderers import (
+    banner_html, summary_html, fluid_html, orders_html,
+    monitoring_html, education_html,
 )
 from rag_engine import RAGEngine
 
@@ -175,17 +181,6 @@ def analyze(image_path, age, weight, height, hours_since,
     Returns a 6-tuple of HTML strings: (banner, summary, fluid, orders,
     monitoring, education) — one for each gr.HTML output in the UI.
     """
-    from calculator import (
-        calculate_parkland, classify_burn_severity, get_warning_message,
-        modified_brooke, mosteller_bsa, parkland_with_lag,
-    )
-    from triage import classify, red_flags
-    from orders import build_checklist
-    from renderers import (
-        banner_html, summary_html, fluid_html, orders_html,
-        monitoring_html, education_html,
-    )
-
     def _empty_six(message: str) -> tuple:
         msg_html = f'<div class="alert-warn">{message}</div>'
         empty = '<div class="muted kpi-hint">—</div>'
@@ -206,6 +201,7 @@ def analyze(image_path, age, weight, height, hours_since,
         age_i = int(age) if age is not None else 25
     except (TypeError, ValueError):
         age_i = 25
+    age_i = max(0, age_i)
 
     try:
         height_f = float(height) if height not in (None, 0, "") else None
@@ -228,7 +224,7 @@ def analyze(image_path, age, weight, height, hours_since,
     try:
         image = load_and_resize_image(image_path)
     except Exception as e:
-        return _empty_six(f"❌ Gagal membaca gambar: {e}")
+        return _empty_six(f"❌ Gagal membaca gambar: {escape(str(e))}")
 
     # ── Vision (Gemini) ──────────────────────────────────────────────────────
     ai = call_gemini_vision(image, age_i)
@@ -238,8 +234,8 @@ def analyze(image_path, age, weight, height, hours_since,
             "Cek koneksi dan rate limit Gemini, lalu coba lagi dalam 1-2 menit."
         )
 
-    tbsa = ai["tbsa_percent"]
-    burn_degree = ai["burn_degree"]
+    tbsa = ai.get("tbsa_percent", 0.0) or 0.0
+    burn_degree = ai.get("burn_degree") or "Unknown"
 
     # ── Calculations ────────────────────────────────────────────────────────
     fluid = parkland_with_lag(weight_f, tbsa, hours_since_f)

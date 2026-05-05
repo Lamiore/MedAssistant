@@ -45,13 +45,13 @@ def test_analyze_returns_six_html_strings(tmp_path):
 
 
 def test_analyze_handles_missing_image():
-    from app import analyze
-    result = analyze(
-        image_path=None, age=25, weight=60, height=170, hours_since=1,
-        mechanism="Thermal", inhalation=False, circumferential=False, comorbid=[],
-    )
+    with patch("app.call_gemini_vision", return_value=None):
+        from app import analyze
+        result = analyze(
+            image_path=None, age=25, weight=60, height=170, hours_since=1,
+            mechanism="Thermal", inhalation=False, circumferential=False, comorbid=[],
+        )
     assert len(result) == 6
-    # First element (banner area) should mention the upload requirement
     assert "Upload" in result[0] or "foto" in result[0].lower()
 
 
