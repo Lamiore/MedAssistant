@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from renderers import banner_html, summary_html, fluid_html, orders_html
+from renderers import banner_html, summary_html, fluid_html, orders_html, monitoring_html, education_html
 
 
 def _sample_results():
@@ -174,3 +174,32 @@ def test_fluid_html_survives_empty_dict():
     html = fluid_html({})
     # Should produce HTML without crashing
     assert "tab-section" in html or "PARKLAND" in html
+
+
+# ── monitoring_html / education_html ─────────────────────────────────────────
+
+def test_monitoring_html_renders_three_milestones():
+    html = monitoring_html(_sample_results())
+    assert "0–8" in html or "0-8" in html
+    assert "8–16" in html or "8-16" in html
+    assert "16–24" in html or "16-24" in html
+
+
+def test_monitoring_html_includes_warning():
+    html = monitoring_html(_sample_results())
+    assert "MAJOR BURN" in html
+
+
+def test_education_html_renders_explanation_and_refs():
+    html = education_html(_sample_results())
+    assert "Pasien dewasa" in html
+    assert "ABA Guidelines" in html
+    assert "Parkland Baxter" in html
+
+
+def test_education_html_falls_back_when_explanation_missing():
+    r = _sample_results()
+    r["rag_explanation"] = ""
+    r["references"] = []
+    html = education_html(r)
+    assert "ABA" in html  # static fallback present

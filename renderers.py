@@ -312,3 +312,72 @@ def orders_html(r: dict) -> str:
       </div>
     </div>
     """
+
+
+# ── monitoring tab ───────────────────────────────────────────────────────────
+
+def monitoring_html(r: dict) -> str:
+    fluid = r.get("fluid") or {}
+    rate1 = fluid.get("rate_first_8h_mlph") or 0
+    rate2 = fluid.get("rate_next_16h_mlph") or 0
+    warning = r.get("warning") or ""
+
+    warning_html = (
+        f'<div class="alert-warn">⚠ <b>Warning klinis:</b> {escape(warning)}</div>'
+        if warning else ""
+    )
+
+    return f"""
+    <div class="tab-section">
+      <div class="sec-label">📅 24h MONITORING TIMELINE</div>
+      <ul class="timeline">
+        <li class="tl-item tl-active">
+          <div class="tl-dot tl-dot-active"></div>
+          <div class="tl-time">0–8 JAM</div>
+          <div class="tl-body">Rate {rate1:.0f} mL/jam · cek urine /1jam · GCS · vitals q15min</div>
+        </li>
+        <li class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-time">8–16 JAM</div>
+          <div class="tl-body">Rate {rate2:.0f} mL/jam · titrasi sesuai UO 0.5-1 mL/kg/jam</div>
+        </li>
+        <li class="tl-item">
+          <div class="tl-dot"></div>
+          <div class="tl-time">16–24 JAM</div>
+          <div class="tl-body">Recheck TBSA manual · ABG ulang · plan eskar/graft · gizi enteral early</div>
+        </li>
+      </ul>
+      {warning_html}
+    </div>
+    """
+
+
+# ── education tab ────────────────────────────────────────────────────────────
+
+_FALLBACK_REFS = [
+    "ABA Guidelines on Management of Acute Burns (2022)",
+    "Parkland Formula — Baxter CR, 1974",
+    "Lund-Browder Chart (age-adjusted)",
+    "ATLS Burn Module 10ed",
+]
+
+
+def education_html(r: dict) -> str:
+    explanation = r.get("rag_explanation") or (
+        "(Penjelasan RAG tidak tersedia — referensi statis di bawah ini.)"
+    )
+    refs = r.get("references") or _FALLBACK_REFS
+
+    refs_html = "".join(f"<li>{escape(ref)}</li>" for ref in refs)
+
+    return f"""
+    <div class="tab-section">
+      <div class="sec-label">📝 PANDUAN MANAJEMEN (RAG)</div>
+      <div class="rag-block">{escape(explanation)}</div>
+    </div>
+
+    <div class="tab-section">
+      <div class="sec-label">📖 REFERENSI</div>
+      <ul class="refs">{refs_html}</ul>
+    </div>
+    """
