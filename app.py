@@ -317,8 +317,47 @@ import gradio as gr  # noqa: E402 (imported here to keep top-of-file lean)
 
 CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Force light mode regardless of OS preference */
+:root, .dark, html.dark, body.dark, .gradio-container.dark {
+    --body-background-fill: #F1F5F9 !important;
+    --background-fill-primary: #FFFFFF !important;
+    --background-fill-secondary: #F8FAFC !important;
+    --body-text-color: #1E293B !important;
+    --body-text-color-subdued: #475569 !important;
+    --block-background-fill: #FFFFFF !important;
+    --block-label-background-fill: #FFFFFF !important;
+    --block-label-text-color: #475569 !important;
+    --block-title-text-color: #1E293B !important;
+    --input-background-fill: #FFFFFF !important;
+    --neutral-50: #F8FAFC !important;
+    --neutral-100: #F1F5F9 !important;
+    --neutral-200: #E2E8F0 !important;
+    --color-accent: #1D4ED8 !important;
+    --color-accent-soft: #DBEAFE !important;
+    color-scheme: light !important;
+}
+html, body, .gradio-container, .dark .gradio-container {
+    background:#F1F5F9 !important;
+    color:#1E293B !important;
+    color-scheme: light !important;
+}
+.dark, html.dark, body.dark { color-scheme: light !important; }
+
 *,body,.gradio-container{font-family:'Inter','Segoe UI',Arial,sans-serif!important}
-body,.gradio-container{background:#F1F5F9!important;color:#1E293B!important}
+
+/* Force black-ish text on every Gradio block content area */
+.gradio-container, .gradio-container *:not(.hdr):not(.hdr *):not(.btn button):not(.flag-chip):not(.flag-chip *) {
+    color: inherit;
+}
+.gradio-container .prose, .gradio-container p, .gradio-container span,
+.gradio-container div, .gradio-container li, .gradio-container td, .gradio-container th {
+    color:#1E293B;
+}
+/* but allow our explicit color rules to win */
+.muted, .muted *{color:#64748B !important}
+.kpi-key{color:#64748B !important}
+.kpi-sub{color:#64748B !important}
 
 /* Header */
 .hdr{background:linear-gradient(135deg,#1D4ED8,#1E40AF);border-radius:12px;
@@ -426,6 +465,23 @@ body,.gradio-container{background:#F1F5F9!important;color:#1E293B!important}
 """
 
 
+FORCE_LIGHT_JS = """
+() => {
+  const r = document.documentElement;
+  r.classList.remove('dark');
+  r.style.colorScheme = 'light';
+  document.body && document.body.classList.remove('dark');
+  // Re-apply on any class mutation by Gradio
+  new MutationObserver(() => {
+    if (r.classList.contains('dark')) {
+      r.classList.remove('dark');
+      r.style.colorScheme = 'light';
+    }
+  }).observe(r, {attributes: true, attributeFilter: ['class']});
+}
+"""
+
+
 def build_ui():
     with gr.Blocks(title="Sistem Penilaian Luka Bakar") as demo:
         gr.HTML("""
@@ -520,4 +576,6 @@ if __name__ == "__main__":
         share=False,
         show_error=True,
         css=CSS,
+        theme=gr.themes.Default(),
+        js=FORCE_LIGHT_JS,
     )
