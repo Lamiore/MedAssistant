@@ -13,6 +13,7 @@ import json
 import os
 import re
 import time
+from html import escape
 
 from dotenv import load_dotenv
 from google import genai
@@ -20,9 +21,14 @@ from google.genai import types
 from PIL import Image
 
 from calculator import (
-    calculate_parkland,
-    classify_burn_severity,
-    get_warning_message,
+    calculate_parkland, classify_burn_severity, get_warning_message,
+    modified_brooke, mosteller_bsa, parkland_with_lag,
+)
+from triage import classify, red_flags
+from orders import build_checklist
+from renderers import (
+    banner_html, summary_html, fluid_html, orders_html,
+    monitoring_html, education_html,
 )
 from rag_engine import RAGEngine
 
@@ -168,110 +174,140 @@ def call_gemini_vision(image: Image.Image, age: int):
 
 # ── Main orchestrator ────────────────────────────────────────────────────────
 
-def analyze(image_path, age, weight):
-    """Called by Gradio. Returns 8-tuple of strings for the output components."""
+def analyze(image_path, age, weight, height, hours_since,
+            mechanism, inhalation, circumferential, comorbid):
+    """
+    Orchestrate vision + calculator + triage + orders + RAG.
+    Returns a 6-tuple of HTML strings: (banner, summary, fluid, orders,
+    monitoring, education) — one for each gr.HTML output in the UI.
+    """
+    def _empty_six(message: str) -> tuple:
+        msg_html = f'<div class="alert-warn">{message}</div>'
+        empty = '<div class="muted kpi-hint">—</div>'
+        return (msg_html, empty, empty, empty, empty, empty)
+
+    # ── Validate inputs ──────────────────────────────────────────────────────
     if image_path is None:
-        return ("⚠️ Upload foto luka bakar terlebih dahulu.",) + ("",) * 7
+        return _empty_six("⚠️ Upload foto luka bakar terlebih dahulu.")
 
     try:
-        weight = float(weight)
+        weight_f = float(weight) if weight is not None else 0.0
     except (TypeError, ValueError):
-        weight = 0.0
-    if weight <= 0:
-        return ("⚠️ Masukkan berat badan pasien (kg).",) + ("",) * 7
+        weight_f = 0.0
+    if weight_f <= 0:
+        return _empty_six("⚠️ Masukkan berat badan pasien (kg).")
 
     try:
-        age = int(age) if age is not None else 25
+        age_i = int(age) if age is not None else 25
     except (TypeError, ValueError):
-        age = 25
+        age_i = 25
+    age_i = max(0, age_i)
 
+    try:
+        height_f = float(height) if height not in (None, 0, "") else None
+    except (TypeError, ValueError):
+        height_f = None
+
+    try:
+        hours_since_f = float(hours_since) if hours_since is not None else 0.0
+    except (TypeError, ValueError):
+        hours_since_f = 0.0
+    if hours_since_f < 0:
+        hours_since_f = 0.0
+
+    mechanism_s = str(mechanism) if mechanism else "Thermal"
+    comorbid_list = list(comorbid) if comorbid else []
+    inhalation_b = bool(inhalation)
+    circumferential_b = bool(circumferential)
+
+    # ── Image ────────────────────────────────────────────────────────────────
     try:
         image = load_and_resize_image(image_path)
     except Exception as e:
-        return (f"❌ Gagal membaca gambar: {e}",) + ("",) * 7
+        return _empty_six(f"❌ Gagal membaca gambar: {escape(str(e))}")
 
-    ai = call_gemini_vision(image, age)
+    # ── Vision (Gemini) ──────────────────────────────────────────────────────
+    ai = call_gemini_vision(image, age_i)
     if ai is None:
-        return (
-            "⚠️ Semua model AI gagal menganalisis foto.\n\n"
-            "Kemungkinan penyebab:\n"
-            "• Rate limit Gemini API — tunggu 1-2 menit lalu coba lagi\n"
-            "• Foto terlalu gelap atau tidak jelas\n"
-            "• Koneksi internet bermasalah\n\n"
-            "Silakan klik tombol Analisis kembali.",
-        ) + ("",) * 7
+        return _empty_six(
+            "⚠️ Semua model AI gagal menganalisis foto. "
+            "Cek koneksi dan rate limit Gemini, lalu coba lagi dalam 1-2 menit."
+        )
 
-    tbsa = ai["tbsa_percent"]
-    degree = ai["burn_degree"]
-    areas = ai["areas"]
-    desc = ai["description"]
-    conf = ai["confidence"]
+    tbsa = ai.get("tbsa_percent", 0.0) or 0.0
+    burn_degree = ai.get("burn_degree") or "Unknown"
 
-    fluid = calculate_parkland(weight, tbsa)
+    # ── Calculations ────────────────────────────────────────────────────────
+    fluid = parkland_with_lag(weight_f, tbsa, hours_since_f)
+    brooke = modified_brooke(weight_f, tbsa)
+    bsa = mosteller_bsa(weight_f, height_f)
     severity = classify_burn_severity(tbsa)
-    warning = get_warning_message(tbsa, age)
+    warning = get_warning_message(tbsa, age_i)
 
-    rag_exp = ""
-    refs = []
+    # ── Triage + orders ─────────────────────────────────────────────────────
+    disposition, disp_reasons = classify(
+        tbsa=tbsa, age=age_i, mechanism=mechanism_s,
+        inhalation=inhalation_b, circumferential=circumferential_b,
+        comorbid=comorbid_list, burn_degree=burn_degree,
+    )
+    flags = red_flags(
+        tbsa=tbsa, inhalation=inhalation_b,
+        circumferential=circumferential_b, comorbid=comorbid_list,
+    )
+    order_list = build_checklist(
+        tbsa=tbsa, weight_kg=weight_f, mechanism=mechanism_s,
+        inhalation=inhalation_b, circumferential=circumferential_b,
+    )
+
+    # ── RAG ─────────────────────────────────────────────────────────────────
+    rag_explanation, references = "", []
     try:
         engine = get_rag_engine()
         question = (
-            f"Pasien usia {age} tahun, berat {weight}kg, luka bakar "
-            f"{severity.lower()}, TBSA {tbsa:.1f}% ({degree}). "
+            f"Pasien usia {age_i} tahun, berat {weight_f}kg, luka bakar "
+            f"{severity.lower()}, TBSA {tbsa:.1f}% ({burn_degree}). "
             "Apa prioritas manajemen dan monitoring cairan?"
         )
-        result = engine.query(question, tbsa, age)
-        rag_exp = result.get("explanation", "")
-        refs = result.get("references", [])
+        rag_result = engine.query(question, tbsa, age_i)
+        rag_explanation = rag_result.get("explanation", "")
+        references = rag_result.get("references", [])
     except Exception as e:
         print(f"[WARN] RAG: {e}")
-        rag_exp = "(RAG explanation unavailable — see references below.)"
+        rag_explanation = ""
+        references = []
 
-    icon = {
-        "Minor": "🟢",
-        "Moderate": "🟡",
-        "Major / Severe": "🔴",
-        "Critical / Life-Threatening": "🚨",
-    }.get(severity, "⚪")
-
-    tbsa_str = (
-        f"TBSA           : {tbsa:.1f}%\n"
-        f"Area terbakar  : {', '.join(areas) if areas else '-'}\n"
-        f"Karakteristik  : {desc}\n"
-        f"Kepercayaan AI : {conf.upper()}"
-    )
-    fluid_str = (
-        f"Total 24 jam : {fluid['total_24h_ml']:,.0f} mL {fluid['fluid_type']}\n"
-        f"Target urine : {0.5 * weight:.0f} – {1.0 * weight:.0f} mL/jam\n"
-        f"Rumus        : 4 mL × {weight:.0f} kg × {tbsa:.1f}% = {fluid['total_24h_ml']:,.0f} mL"
-    )
-    sched_str = (
-        f"8 JAM PERTAMA  (dari saat kejadian)\n"
-        f"  Volume : {fluid['first_8h_ml']:,.0f} mL   |   Rate : {fluid['rate_first_8h_mlph']:.1f} mL/jam\n\n"
-        f"16 JAM BERIKUTNYA\n"
-        f"  Volume : {fluid['next_16h_ml']:,.0f} mL   |   Rate : {fluid['rate_next_16h_mlph']:.1f} mL/jam\n\n"
-        f"Waktu dihitung dari SAAT KEJADIAN, bukan masuk RS!\n"
-        f"Titrasi sesuai urine output aktual."
-    )
-    refs_str = (
-        "\n".join(f"• {x}" for x in refs)
-        if refs
-        else (
-            "• Parkland Formula (Baxter CR, 1974)\n"
-            "• Lund-Browder Chart\n"
-            "• ABA Guidelines on Management of Acute Burns (2022)"
-        )
-    )
+    # ── Build results dict and render ───────────────────────────────────────
+    results = {
+        "patient": {
+            "age": age_i, "weight": weight_f, "height": height_f,
+            "bsa_m2": bsa, "mechanism": mechanism_s,
+        },
+        "ai": {
+            "burn_degree": burn_degree, "tbsa": tbsa,
+            "areas": ai.get("areas", []),
+            "description": ai.get("description", ""),
+            "confidence": ai.get("confidence", "medium"),
+        },
+        "severity": severity,
+        "fluid": fluid,
+        "brooke": brooke,
+        "disposition": disposition,
+        "disposition_reasons": disp_reasons,
+        "red_flags": flags,
+        "orders": order_list,
+        "rag_explanation": rag_explanation,
+        "references": references,
+        "warning": warning,
+        "hours_since": hours_since_f,
+    }
 
     return (
-        tbsa_str,
-        degree,
-        f"{icon}  {severity}",
-        fluid_str,
-        sched_str,
-        rag_exp,
-        refs_str,
-        warning,
+        banner_html(results),
+        summary_html(results),
+        fluid_html(results),
+        orders_html(results),
+        monitoring_html(results),
+        education_html(results),
     )
 
 
@@ -283,24 +319,110 @@ CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 *,body,.gradio-container{font-family:'Inter','Segoe UI',Arial,sans-serif!important}
 body,.gradio-container{background:#F1F5F9!important;color:#1E293B!important}
-.hdr{background:linear-gradient(135deg,#1D4ED8,#1E40AF);border-radius:14px;padding:26px 32px;margin-bottom:20px}
-.hdr h1{font-size:1.65rem;font-weight:700;color:#fff!important;margin:0 0 6px 0}
-.hdr p{color:#BFDBFE!important;margin:0;font-size:.85rem;line-height:1.6}
+
+/* Header */
+.hdr{background:linear-gradient(135deg,#1D4ED8,#1E40AF);border-radius:12px;
+     padding:22px 28px;margin-bottom:14px}
+.hdr h1{font-size:1.6rem;font-weight:700;color:#fff!important;margin:0 0 4px 0}
+.hdr p{color:#BFDBFE!important;margin:0;font-size:.82rem;line-height:1.6}
+
+/* Section labels */
 .sec{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
-     color:#1D4ED8;padding-bottom:6px;border-bottom:2px solid #DBEAFE;margin:18px 0 10px}
-.gradio-container label{color:#475569!important;font-size:.77rem!important;font-weight:600!important}
-.gradio-container textarea,.gradio-container input[type=number]{
+     color:#1D4ED8;padding-bottom:5px;border-bottom:2px solid #DBEAFE;margin:16px 0 10px}
+.sec-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+           color:#1D4ED8;margin-bottom:6px}
+
+/* Inputs */
+.gradio-container label{color:#475569!important;font-size:.78rem!important;font-weight:600!important}
+.gradio-container textarea,.gradio-container input[type=number],
+.gradio-container input[type=text],.gradio-container select{
     background:#fff!important;border:1px solid #CBD5E1!important;
-    color:#1E293B!important;border-radius:8px!important;font-size:.88rem!important}
+    color:#1E293B!important;border-radius:6px!important;font-size:.88rem!important}
+
+/* Submit button */
 .btn button{background:#1D4ED8!important;color:#fff!important;font-weight:700!important;
-    font-size:1rem!important;border-radius:8px!important;border:none!important;
-    padding:14px!important;width:100%!important;
+    font-size:.95rem!important;border-radius:7px!important;border:none!important;
+    padding:13px!important;width:100%!important;
     box-shadow:0 2px 12px rgba(29,78,216,.35)!important}
 .btn button:hover{background:#1E40AF!important}
-.warn textarea{background:#FFF7ED!important;border:1px solid #FED7AA!important;
-    color:#92400E!important;font-weight:600!important}
-.ftr{text-align:center;color:#94A3B8;font-size:.75rem;
-    margin-top:24px;padding:16px;border-top:1px solid #E2E8F0}
+
+/* KPI banner */
+.kpi-banner{background:#fff;border:1px solid #1D4ED8;border-left:5px solid #1D4ED8;
+            border-radius:8px;padding:14px 18px;margin-bottom:10px}
+.kpi-label{font-size:.68rem;color:#1D4ED8;text-transform:uppercase;font-weight:700;
+           letter-spacing:1.5px;margin-bottom:8px}
+.kpi-grid{display:grid;grid-template-columns:1.4fr 1fr 1.2fr 1fr 1.3fr;gap:14px}
+.kpi-key{font-size:.68rem;color:#64748B;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.kpi-val{font-size:.95rem;font-weight:700;color:#1E293B;line-height:1.15;margin-top:2px}
+.kpi-big{font-size:1.4rem!important}
+.kpi-sub{font-size:.7rem;color:#64748B;margin-top:1px}
+
+/* Tab sections */
+.tab-section{margin-bottom:14px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:.82rem;line-height:1.6}
+.muted{color:#64748B}
+.kpi-hint{font-size:.74rem}
+
+/* Cards */
+.card-primary{background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #1D4ED8;
+              border-radius:6px;padding:11px 14px}
+.card-soft{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:10px 12px}
+.card-disp{border:1px solid;border-left:4px solid;border-radius:6px;padding:11px 14px}
+.big-num{font-size:.95rem;font-weight:700;color:#1E293B;margin-top:3px}
+.num-md{font-size:1rem;font-weight:700}
+.reasons{margin:6px 0 0 18px;font-size:.78rem;color:#475569;line-height:1.6}
+
+/* Confidence bar */
+.conf-row{display:flex;align-items:center;gap:10px;font-size:.82rem}
+.conf-bar{flex:1;background:#F1F5F9;height:9px;border-radius:5px;overflow:hidden}
+.conf-fill{height:100%;border-radius:5px}
+
+/* Red flag chips */
+.flag-row{display:flex;flex-wrap:wrap;gap:5px}
+.flag-chip{padding:4px 10px;border-radius:99px;font-size:.78rem;font-weight:600}
+.flag-clear{font-weight:400!important}
+
+/* Orders list */
+.orders-list{font-size:.82rem;line-height:1.85}
+.order-item{padding:1px 0}
+
+/* Formula compare table */
+.form-compare{width:100%;border-collapse:collapse;font-size:.8rem}
+.form-compare thead{background:#F1F5F9}
+.form-compare th{text-align:left;padding:6px 8px;border-bottom:2px solid #CBD5E1}
+.form-compare td{padding:5px 8px;border-bottom:1px solid #E2E8F0}
+
+/* Timeline */
+.timeline{list-style:none;padding:0 0 0 18px;margin:0;border-left:2px solid #DBEAFE}
+.tl-item{position:relative;padding-bottom:10px}
+.tl-dot{position:absolute;left:-23px;top:2px;width:8px;height:8px;background:#fff;
+        border:2px solid #1D4ED8;border-radius:50%}
+.tl-dot-active{background:#1D4ED8;box-shadow:0 0 0 2px #1D4ED8}
+.tl-active .tl-time{color:#1E40AF}
+.tl-time{font-size:.82rem;font-weight:700;color:#475569}
+.tl-body{font-size:.78rem;color:#475569;margin-top:2px}
+
+/* RAG block */
+.rag-block{background:#F8FAFC;border-radius:6px;padding:10px 12px;
+           font-size:.82rem;line-height:1.7;color:#1E293B;white-space:pre-wrap}
+.refs{margin:0 0 0 18px;font-size:.78rem;color:#475569;line-height:1.7}
+
+/* Alerts */
+.alert-warn{background:#FFF7ED;border:1px solid #FED7AA;border-radius:5px;
+            padding:8px 11px;font-size:.78rem;color:#92400E;margin-top:6px}
+
+/* Hint card */
+.hint{background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #1D4ED8;
+      border-radius:7px;padding:10px 13px;font-size:.78rem;color:#1E40AF;line-height:1.7;margin-top:10px}
+
+/* Risk checkbox cards */
+.risk-card label{background:#FFF7ED!important;border:1px solid #FED7AA!important;
+                 padding:6px 8px!important;border-radius:5px!important;
+                 color:#92400E!important;display:block!important;margin-bottom:5px!important}
+
+/* Footer */
+.ftr{text-align:center;color:#64748B;font-size:.74rem;margin-top:22px;
+     padding:14px;border-top:1px solid #E2E8F0}
 """
 
 
@@ -309,65 +431,82 @@ def build_ui():
         gr.HTML("""
         <div class="hdr">
           <h1>🏥 Sistem Penilaian Luka Bakar</h1>
-          <p>Deteksi AI Otomatis (Gemini) &nbsp;|&nbsp; Lund-Browder Chart &nbsp;|&nbsp; Formula Parkland</p>
+          <p>Clinical Decision Aid · Lund-Browder · Parkland · ABA Burn Center Criteria</p>
         </div>""")
 
         with gr.Row(equal_height=False):
+            # ── Sidebar (left) ──────────────────────────────────────────────
             with gr.Column(scale=1, min_width=340):
                 gr.HTML('<p class="sec">📷 Foto Luka Bakar</p>')
-                img_in = gr.Image(type="filepath", label="Upload Foto Luka Bakar", height=260)
+                img_in = gr.Image(type="filepath", label="Upload Foto", height=220)
 
                 gr.HTML('<p class="sec">👤 Data Pasien</p>')
                 with gr.Row():
-                    age_in = gr.Number(value=25, label="Usia (tahun)", minimum=0, maximum=120, precision=0)
-                    wt_in = gr.Number(value=60, label="Berat Badan (kg)", minimum=1, maximum=300, precision=1)
+                    age_in = gr.Number(value=25, label="Usia (th)",
+                                       minimum=0, maximum=120, precision=0)
+                    wt_in = gr.Number(value=60, label="Berat (kg)",
+                                      minimum=1, maximum=300, precision=1)
+                with gr.Row():
+                    ht_in = gr.Number(value=None, label="Tinggi (cm) — opt",
+                                      minimum=30, maximum=250, precision=1)
+                    hrs_in = gr.Number(value=0, label="Jam sejak luka",
+                                       minimum=0, maximum=72, precision=1)
 
-                gr.HTML('<div style="height:10px"></div>')
+                gr.HTML('<p class="sec">⚕️ Mekanisme &amp; Risiko</p>')
+                mech_in = gr.Dropdown(
+                    choices=["Thermal", "Electrical", "Chemical"],
+                    value="Thermal", label="Mekanisme cedera",
+                )
+                with gr.Group(elem_classes=["risk-card"]):
+                    inhal_in = gr.Checkbox(label="Suspek inhalation injury (face/neck burn, hoarse, soot)")
+                    circ_in = gr.Checkbox(label="Circumferential burn (melilit ekstremitas / dada)")
+                comorb_in = gr.CheckboxGroup(
+                    choices=["DM", "CKD", "Jantung", "Hamil"],
+                    value=[], label="Komorbid (opt)",
+                )
+
                 with gr.Row(elem_classes=["btn"]):
                     btn = gr.Button("🔍  Analisis Luka Bakar", variant="primary")
 
                 gr.HTML("""
-                <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-left:4px solid #1D4ED8;
-                     border-radius:8px;padding:10px 14px;font-size:.79rem;color:#1E40AF;
-                     line-height:1.8;margin-top:10px">
+                <div class="hint">
                   <b>Petunjuk:</b><br>
                   1. Upload foto luka bakar yang jelas<br>
-                  2. Isi usia dan berat badan pasien<br>
-                  3. Klik <em>Analisis Luka Bakar</em><br>
-                  4. Tunggu 15–60 detik<br>
-                  5. Jika gagal, klik sekali lagi
+                  2. Isi data pasien &amp; mekanisme<br>
+                  3. Klik <em>Analisis</em> · tunggu 15-60 detik<br>
+                  4. Jika gagal, klik sekali lagi<br>
+                  <br>
+                  <em>Jam sejak luka</em> dipakai untuk menghitung catch-up rate Parkland bila pasien datang terlambat.
                 </div>""")
 
-            with gr.Column(scale=1, min_width=420):
-                gr.HTML('<p class="sec">📊 Estimasi TBSA</p>')
-                tbsa_out = gr.Textbox(label="Hasil Deteksi AI + TBSA (Lund-Browder)",
-                                      lines=4, interactive=False)
-                with gr.Row():
-                    deg_out = gr.Textbox(label="Derajat Luka Bakar", lines=1, interactive=False)
-                    sev_out = gr.Textbox(label="Klasifikasi Keparahan", lines=1, interactive=False)
+            # ── Output area (right) ─────────────────────────────────────────
+            with gr.Column(scale=2, min_width=520):
+                banner_out = gr.HTML(value='<div class="kpi-banner"><div class="kpi-label">PATIENT BANNER · KPI</div><div class="muted kpi-hint">Hasil akan tampil setelah Analisis.</div></div>')
 
-                gr.HTML('<p class="sec">💧 Terapi Cairan — Formula Parkland</p>')
-                fluid_out = gr.Textbox(label="Total Cairan 24 Jam", lines=3, interactive=False)
-                sched_out = gr.Textbox(label="Jadwal Pemberian Cairan", lines=7, interactive=False)
-
-                gr.HTML('<p class="sec">📝 Rekomendasi Klinis (RAG)</p>')
-                rag_out = gr.Textbox(label="Panduan Manajemen Klinis", lines=12, interactive=False)
-                refs_out = gr.Textbox(label="Referensi", lines=3, interactive=False)
-                warn_out = gr.Textbox(label="⚠️ Peringatan Klinis",
-                                      lines=3, interactive=False, elem_classes=["warn"])
+                with gr.Tabs():
+                    with gr.Tab("📊 Ringkasan"):
+                        summary_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
+                    with gr.Tab("💧 Cairan"):
+                        fluid_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
+                    with gr.Tab("📋 Orders"):
+                        orders_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
+                    with gr.Tab("⏱ Monitoring"):
+                        monitoring_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
+                    with gr.Tab("📚 Edukasi & Refs"):
+                        education_out = gr.HTML(value='<div class="muted kpi-hint">Belum ada hasil.</div>')
 
         gr.HTML("""
         <div class="ftr">
-          Sistem Penilaian Luka Bakar &nbsp;|&nbsp; Lund-Browder Chart &nbsp;|&nbsp;
-          Formula Parkland (Baxter CR, 1974)<br>
+          Sistem Penilaian Luka Bakar · Lund-Browder · Parkland (Baxter, 1974) · ABA Criteria<br>
           Alat bantu klinis — keputusan akhir tetap pada tenaga medis.
         </div>""")
 
         btn.click(
             fn=analyze,
-            inputs=[img_in, age_in, wt_in],
-            outputs=[tbsa_out, deg_out, sev_out,
-                     fluid_out, sched_out, rag_out, refs_out, warn_out],
+            inputs=[img_in, age_in, wt_in, ht_in, hrs_in,
+                    mech_in, inhal_in, circ_in, comorb_in],
+            outputs=[banner_out, summary_out, fluid_out,
+                     orders_out, monitoring_out, education_out],
             show_progress=True,
         )
 
