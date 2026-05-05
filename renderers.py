@@ -26,6 +26,19 @@ def _fmt_int(n) -> str:
         return "—"
 
 
+def _to_float(n, default: float = 0.0) -> float:
+    """Coerce to float; return default for None / non-numeric / non-finite."""
+    if n is None:
+        return default
+    try:
+        f = float(n)
+        if not math.isfinite(f):
+            return default
+        return f
+    except (TypeError, ValueError):
+        return default
+
+
 # Used by fluid_html and orders_html (Tasks 5/6).
 def _fmt_pct(n, decimals=1) -> str:
     if n is None:
@@ -188,17 +201,17 @@ def fluid_html(r: dict) -> str:
     fluid = r.get("fluid", {})
     brooke = r.get("brooke", {})
     p = r.get("patient", {})
-    weight = p.get("weight") or 0
+    weight = _to_float(p.get("weight"))
 
     total = fluid.get("total_24h_ml") or 0
     first8 = fluid.get("first_8h_ml") or 0
     rest = fluid.get("next_16h_ml") or 0
-    rate1 = fluid.get("rate_first_8h_mlph") or 0
-    rate2 = fluid.get("rate_next_16h_mlph") or 0
+    rate1 = _to_float(fluid.get("rate_first_8h_mlph"))
+    rate2 = _to_float(fluid.get("rate_next_16h_mlph"))
     lag = fluid.get("lag_status") or "on_time"
     catchup = fluid.get("catchup_rate_mlph")  # genuinely Optional, kept as-is
-    rem = fluid.get("hours_remaining_first_8h") or 8
-    hours_since = r.get("hours_since") or 0
+    rem = _to_float(fluid.get("hours_remaining_first_8h"), default=8.0)
+    hours_since = _to_float(r.get("hours_since"))
 
     # Catch-up alert
     if lag == "catching_up" and catchup is not None:
@@ -318,8 +331,8 @@ def orders_html(r: dict) -> str:
 
 def monitoring_html(r: dict) -> str:
     fluid = r.get("fluid") or {}
-    rate1 = fluid.get("rate_first_8h_mlph") or 0
-    rate2 = fluid.get("rate_next_16h_mlph") or 0
+    rate1 = _to_float(fluid.get("rate_first_8h_mlph"))
+    rate2 = _to_float(fluid.get("rate_next_16h_mlph"))
     warning = r.get("warning") or ""
 
     warning_html = (

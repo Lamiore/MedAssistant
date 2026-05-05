@@ -203,3 +203,18 @@ def test_education_html_falls_back_when_explanation_missing():
     r["references"] = []
     html = education_html(r)
     assert "ABA" in html  # static fallback present
+
+
+def test_monitoring_html_survives_none_rates():
+    r = _sample_results()
+    r["fluid"]["rate_first_8h_mlph"] = None
+    r["fluid"]["rate_next_16h_mlph"] = None
+    html = monitoring_html(r)
+    assert "0 mL/jam" in html
+
+
+def test_monitoring_html_omits_warning_when_absent():
+    r = _sample_results()
+    r["warning"] = None
+    html = monitoring_html(r)
+    assert "alert-warn" not in html
