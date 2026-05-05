@@ -168,110 +168,150 @@ def call_gemini_vision(image: Image.Image, age: int):
 
 # ── Main orchestrator ────────────────────────────────────────────────────────
 
-def analyze(image_path, age, weight):
-    """Called by Gradio. Returns 8-tuple of strings for the output components."""
+def analyze(image_path, age, weight, height, hours_since,
+            mechanism, inhalation, circumferential, comorbid):
+    """
+    Orchestrate vision + calculator + triage + orders + RAG.
+    Returns a 6-tuple of HTML strings: (banner, summary, fluid, orders,
+    monitoring, education) — one for each gr.HTML output in the UI.
+    """
+    from calculator import (
+        calculate_parkland, classify_burn_severity, get_warning_message,
+        modified_brooke, mosteller_bsa, parkland_with_lag,
+    )
+    from triage import classify, red_flags
+    from orders import build_checklist
+    from renderers import (
+        banner_html, summary_html, fluid_html, orders_html,
+        monitoring_html, education_html,
+    )
+
+    def _empty_six(message: str) -> tuple:
+        msg_html = f'<div class="alert-warn">{message}</div>'
+        empty = '<div class="muted kpi-hint">—</div>'
+        return (msg_html, empty, empty, empty, empty, empty)
+
+    # ── Validate inputs ──────────────────────────────────────────────────────
     if image_path is None:
-        return ("⚠️ Upload foto luka bakar terlebih dahulu.",) + ("",) * 7
+        return _empty_six("⚠️ Upload foto luka bakar terlebih dahulu.")
 
     try:
-        weight = float(weight)
+        weight_f = float(weight) if weight is not None else 0.0
     except (TypeError, ValueError):
-        weight = 0.0
-    if weight <= 0:
-        return ("⚠️ Masukkan berat badan pasien (kg).",) + ("",) * 7
+        weight_f = 0.0
+    if weight_f <= 0:
+        return _empty_six("⚠️ Masukkan berat badan pasien (kg).")
 
     try:
-        age = int(age) if age is not None else 25
+        age_i = int(age) if age is not None else 25
     except (TypeError, ValueError):
-        age = 25
+        age_i = 25
 
+    try:
+        height_f = float(height) if height not in (None, 0, "") else None
+    except (TypeError, ValueError):
+        height_f = None
+
+    try:
+        hours_since_f = float(hours_since) if hours_since is not None else 0.0
+    except (TypeError, ValueError):
+        hours_since_f = 0.0
+    if hours_since_f < 0:
+        hours_since_f = 0.0
+
+    mechanism_s = str(mechanism) if mechanism else "Thermal"
+    comorbid_list = list(comorbid) if comorbid else []
+    inhalation_b = bool(inhalation)
+    circumferential_b = bool(circumferential)
+
+    # ── Image ────────────────────────────────────────────────────────────────
     try:
         image = load_and_resize_image(image_path)
     except Exception as e:
-        return (f"❌ Gagal membaca gambar: {e}",) + ("",) * 7
+        return _empty_six(f"❌ Gagal membaca gambar: {e}")
 
-    ai = call_gemini_vision(image, age)
+    # ── Vision (Gemini) ──────────────────────────────────────────────────────
+    ai = call_gemini_vision(image, age_i)
     if ai is None:
-        return (
-            "⚠️ Semua model AI gagal menganalisis foto.\n\n"
-            "Kemungkinan penyebab:\n"
-            "• Rate limit Gemini API — tunggu 1-2 menit lalu coba lagi\n"
-            "• Foto terlalu gelap atau tidak jelas\n"
-            "• Koneksi internet bermasalah\n\n"
-            "Silakan klik tombol Analisis kembali.",
-        ) + ("",) * 7
+        return _empty_six(
+            "⚠️ Semua model AI gagal menganalisis foto. "
+            "Cek koneksi dan rate limit Gemini, lalu coba lagi dalam 1-2 menit."
+        )
 
     tbsa = ai["tbsa_percent"]
-    degree = ai["burn_degree"]
-    areas = ai["areas"]
-    desc = ai["description"]
-    conf = ai["confidence"]
+    burn_degree = ai["burn_degree"]
 
-    fluid = calculate_parkland(weight, tbsa)
+    # ── Calculations ────────────────────────────────────────────────────────
+    fluid = parkland_with_lag(weight_f, tbsa, hours_since_f)
+    brooke = modified_brooke(weight_f, tbsa)
+    bsa = mosteller_bsa(weight_f, height_f)
     severity = classify_burn_severity(tbsa)
-    warning = get_warning_message(tbsa, age)
+    warning = get_warning_message(tbsa, age_i)
 
-    rag_exp = ""
-    refs = []
+    # ── Triage + orders ─────────────────────────────────────────────────────
+    disposition, disp_reasons = classify(
+        tbsa=tbsa, age=age_i, mechanism=mechanism_s,
+        inhalation=inhalation_b, circumferential=circumferential_b,
+        comorbid=comorbid_list, burn_degree=burn_degree,
+    )
+    flags = red_flags(
+        tbsa=tbsa, inhalation=inhalation_b,
+        circumferential=circumferential_b, comorbid=comorbid_list,
+    )
+    order_list = build_checklist(
+        tbsa=tbsa, weight_kg=weight_f, mechanism=mechanism_s,
+        inhalation=inhalation_b, circumferential=circumferential_b,
+    )
+
+    # ── RAG ─────────────────────────────────────────────────────────────────
+    rag_explanation, references = "", []
     try:
         engine = get_rag_engine()
         question = (
-            f"Pasien usia {age} tahun, berat {weight}kg, luka bakar "
-            f"{severity.lower()}, TBSA {tbsa:.1f}% ({degree}). "
+            f"Pasien usia {age_i} tahun, berat {weight_f}kg, luka bakar "
+            f"{severity.lower()}, TBSA {tbsa:.1f}% ({burn_degree}). "
             "Apa prioritas manajemen dan monitoring cairan?"
         )
-        result = engine.query(question, tbsa, age)
-        rag_exp = result.get("explanation", "")
-        refs = result.get("references", [])
+        rag_result = engine.query(question, tbsa, age_i)
+        rag_explanation = rag_result.get("explanation", "")
+        references = rag_result.get("references", [])
     except Exception as e:
         print(f"[WARN] RAG: {e}")
-        rag_exp = "(RAG explanation unavailable — see references below.)"
+        rag_explanation = ""
+        references = []
 
-    icon = {
-        "Minor": "🟢",
-        "Moderate": "🟡",
-        "Major / Severe": "🔴",
-        "Critical / Life-Threatening": "🚨",
-    }.get(severity, "⚪")
-
-    tbsa_str = (
-        f"TBSA           : {tbsa:.1f}%\n"
-        f"Area terbakar  : {', '.join(areas) if areas else '-'}\n"
-        f"Karakteristik  : {desc}\n"
-        f"Kepercayaan AI : {conf.upper()}"
-    )
-    fluid_str = (
-        f"Total 24 jam : {fluid['total_24h_ml']:,.0f} mL {fluid['fluid_type']}\n"
-        f"Target urine : {0.5 * weight:.0f} – {1.0 * weight:.0f} mL/jam\n"
-        f"Rumus        : 4 mL × {weight:.0f} kg × {tbsa:.1f}% = {fluid['total_24h_ml']:,.0f} mL"
-    )
-    sched_str = (
-        f"8 JAM PERTAMA  (dari saat kejadian)\n"
-        f"  Volume : {fluid['first_8h_ml']:,.0f} mL   |   Rate : {fluid['rate_first_8h_mlph']:.1f} mL/jam\n\n"
-        f"16 JAM BERIKUTNYA\n"
-        f"  Volume : {fluid['next_16h_ml']:,.0f} mL   |   Rate : {fluid['rate_next_16h_mlph']:.1f} mL/jam\n\n"
-        f"Waktu dihitung dari SAAT KEJADIAN, bukan masuk RS!\n"
-        f"Titrasi sesuai urine output aktual."
-    )
-    refs_str = (
-        "\n".join(f"• {x}" for x in refs)
-        if refs
-        else (
-            "• Parkland Formula (Baxter CR, 1974)\n"
-            "• Lund-Browder Chart\n"
-            "• ABA Guidelines on Management of Acute Burns (2022)"
-        )
-    )
+    # ── Build results dict and render ───────────────────────────────────────
+    results = {
+        "patient": {
+            "age": age_i, "weight": weight_f, "height": height_f,
+            "bsa_m2": bsa, "mechanism": mechanism_s,
+        },
+        "ai": {
+            "burn_degree": burn_degree, "tbsa": tbsa,
+            "areas": ai.get("areas", []),
+            "description": ai.get("description", ""),
+            "confidence": ai.get("confidence", "medium"),
+        },
+        "severity": severity,
+        "fluid": fluid,
+        "brooke": brooke,
+        "disposition": disposition,
+        "disposition_reasons": disp_reasons,
+        "red_flags": flags,
+        "orders": order_list,
+        "rag_explanation": rag_explanation,
+        "references": references,
+        "warning": warning,
+        "hours_since": hours_since_f,
+    }
 
     return (
-        tbsa_str,
-        degree,
-        f"{icon}  {severity}",
-        fluid_str,
-        sched_str,
-        rag_exp,
-        refs_str,
-        warning,
+        banner_html(results),
+        summary_html(results),
+        fluid_html(results),
+        orders_html(results),
+        monitoring_html(results),
+        education_html(results),
     )
 
 
